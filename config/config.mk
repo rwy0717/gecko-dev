@@ -248,6 +248,13 @@ MY_RULES	:= $(DEPTH)/config/myrules.mk
 CCC = $(CXX)
 
 INCLUDES = \
+  -I$(topsrcdir)/js/src/omr/include_core \
+  -I$(topsrcdir)/js/src/omr/gc/startup \
+  -I$(topsrcdir)/js/src/omr/gc/base \
+  -I$(topsrcdir)/js/src/omr/example/glue \
+  -I$(topsrcdir)/js/src/omr/gc/stats \
+  -I$(topsrcdir)/js/src/omr/gc/include \
+  -I$(topsrcdir)/js/src/omr/gc/structs \
   -I$(srcdir) \
   -I$(CURDIR) \
   $(LOCAL_INCLUDES) \
@@ -269,7 +276,7 @@ endif
 include $(MOZILLA_DIR)/config/static-checking-config.mk
 
 CFLAGS		= $(OS_CPPFLAGS) $(OS_CFLAGS)
-CXXFLAGS	= $(OS_CPPFLAGS) $(OS_CXXFLAGS)
+CXXFLAGS	= $(OS_CPPFLAGS) $(OS_CXXFLAGS) -DUT_DIRECT_TRACE_REGISTRATION -DOMR
 LDFLAGS		= $(OS_LDFLAGS) $(MOZBUILD_LDFLAGS) $(MOZ_FIX_LINK_PATHS)
 
 ifdef MOZ_OPTIMIZE

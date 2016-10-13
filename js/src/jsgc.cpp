@@ -6287,6 +6287,7 @@ GCRuntime::checkIfGCAllowedInCurrentState(JS::gcreason::Reason reason)
 void
 GCRuntime::collect(bool nonincrementalByAPI, SliceBudget budget, JS::gcreason::Reason reason)
 {
+    /* OMR TODO: OMR GC here instead. */
     // Checks run for each request, even if we do not actually GC.
     checkCanCallAPI();
 

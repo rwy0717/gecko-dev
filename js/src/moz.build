@@ -659,6 +659,10 @@ USE_LIBS += [
     'zlib',
 ]
 
+OS_LIBS += [
+    'dl /team/jasonhal/spidermonkey/gecko-dev/js/src/omr/lib/libomrstatic.a'
+]
+
 if CONFIG['NIGHTLY_BUILD']:
     DEFINES['ENABLE_BINARYDATA'] = True
 
