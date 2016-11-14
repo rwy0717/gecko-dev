@@ -9,41 +9,5 @@
 
 #include "vm/Runtime.h"
 
-using js::gc::Cell;
-
 mozilla::Atomic<uint32_t, mozilla::Relaxed> MemProfiler::sActiveProfilerCount;
 NativeProfiler* MemProfiler::sNativeProfiler;
-
-GCHeapProfiler*
-MemProfiler::GetGCHeapProfiler(void* addr)
-{
-    JSRuntime* runtime = reinterpret_cast<Cell*>(addr)->runtimeFromAnyThread();
-    return runtime->gc.mMemProfiler.mGCHeapProfiler;
-}
-
-GCHeapProfiler*
-MemProfiler::GetGCHeapProfiler(JSRuntime* runtime)
-{
-    return runtime->gc.mMemProfiler.mGCHeapProfiler;
-}
-
-MemProfiler*
-MemProfiler::GetMemProfiler(JSContext* context)
-{
-    return &context->gc.mMemProfiler;
-}
-
-void
-MemProfiler::start(GCHeapProfiler* aGCHeapProfiler)
-{
-    ReleaseAllJITCode(mRuntime->defaultFreeOp());
-    mGCHeapProfiler = aGCHeapProfiler;
-    sActiveProfilerCount++;
-}
-
-void
-MemProfiler::stop()
-{
-    sActiveProfilerCount--;
-    mGCHeapProfiler = nullptr;
-}

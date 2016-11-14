@@ -83,7 +83,6 @@ struct StructGCPolicy
     }
 
     static void trace(JSTracer* trc, T* tp, const char* name) {
-        tp->trace(trc);
     }
 
     static void sweep(T* tp) {

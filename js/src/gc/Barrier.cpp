@@ -21,68 +21,6 @@
 
 namespace js {
 
-bool
-RuntimeFromMainThreadIsHeapMajorCollecting(JS::shadow::Zone* shadowZone)
-{
-    return shadowZone->runtimeFromMainThread()->isHeapMajorCollecting();
-}
-
-#ifdef DEBUG
-
-static bool
-IsMarkedBlack(NativeObject* obj)
-{
-    // Note: we assume conservatively that Nursery things will be live.
-    if (!obj->isTenured())
-        return true;
-
-    gc::TenuredCell& tenured = obj->asTenured();
-    if (tenured.isMarked(gc::BLACK) || tenured.arena()->allocatedDuringIncremental)
-        return true;
-
-    return false;
-}
-
-bool
-HeapSlot::preconditionForSet(NativeObject* owner, Kind kind, uint32_t slot) const
-{
-    return kind == Slot
-         ? &owner->getSlotRef(slot) == this
-         : &owner->getDenseElement(slot) == (const Value*)this;
-}
-
-bool
-HeapSlot::preconditionForWriteBarrierPost(NativeObject* obj, Kind kind, uint32_t slot,
-                                          const Value& target) const
-{
-    bool isCorrectSlot = kind == Slot
-                         ? obj->getSlotAddressUnchecked(slot)->get() == target
-                         : static_cast<HeapSlot*>(obj->getDenseElements() + slot)->get() == target;
-    bool isBlackToGray = target.isMarkable() &&
-                         IsMarkedBlack(obj) && JS::GCThingIsMarkedGray(JS::GCCellPtr(target));
-    return isCorrectSlot && !isBlackToGray;
-}
-
-bool
-CurrentThreadIsIonCompiling()
-{
-    return TlsPerThreadData.get()->ionCompiling;
-}
-
-bool
-CurrentThreadIsIonCompilingSafeForMinorGC()
-{
-    return TlsPerThreadData.get()->ionCompilingSafeForMinorGC;
-}
-
-bool
-CurrentThreadIsGCSweeping()
-{
-    return TlsPerThreadData.get()->gcSweeping;
-}
-
-#endif // DEBUG
-
 template <typename S>
 template <typename T>
 void
@@ -191,13 +129,4 @@ template struct MovableCellHasher<JSScript*>;
 JS_PUBLIC_API(void)
 JS::HeapObjectPostBarrier(JSObject** objp, JSObject* prev, JSObject* next)
 {
-    MOZ_ASSERT(objp);
-    js::InternalBarrierMethods<JSObject*>::postBarrier(objp, prev, next);
-}
-
-JS_PUBLIC_API(void)
-JS::HeapValuePostBarrier(JS::Value* valuep, const Value& prev, const Value& next)
-{
-    MOZ_ASSERT(valuep);
-    js::InternalBarrierMethods<JS::Value>::postBarrier(valuep, prev, next);
 }

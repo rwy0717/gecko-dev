@@ -12,18 +12,6 @@
 inline void
 js::gc::Arena::init(JS::Zone* zoneArg, AllocKind kind)
 {
-    MOZ_ASSERT(firstFreeSpan.isEmpty());
-    MOZ_ASSERT(!zone);
-    MOZ_ASSERT(!allocated());
-    MOZ_ASSERT(!hasDelayedMarking);
-    MOZ_ASSERT(!allocatedDuringIncremental);
-    MOZ_ASSERT(!markOverflow);
-    MOZ_ASSERT(!auxNextLink);
-
-    zone = zoneArg;
-    allocKind = size_t(kind);
-    setAsFullyUnused();
-    bufferedCells = &ArenaCellSet::Empty;
 }
 
 #endif

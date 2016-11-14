@@ -17,56 +17,33 @@ namespace gc {
 inline /* static */ size_t
 ArenaCellSet::getCellIndex(const TenuredCell* cell)
 {
-    MOZ_ASSERT((uintptr_t(cell) & ~ArenaMask) % CellSize == 0);
-    return (uintptr_t(cell) & ArenaMask) / CellSize;
+    return 0;
 }
 
 inline /* static */ void
 ArenaCellSet::getWordIndexAndMask(size_t cellIndex, size_t* wordp, uint32_t* maskp)
 {
-    BitArray<ArenaCellCount>::getIndexAndMask(cellIndex, wordp, maskp);
 }
 
 inline bool
 ArenaCellSet::hasCell(size_t cellIndex) const
 {
-    MOZ_ASSERT(cellIndex < ArenaCellCount);
-    return bits.get(cellIndex);
+    return true;
 }
 
 inline void
 ArenaCellSet::putCell(size_t cellIndex)
 {
-    MOZ_ASSERT(cellIndex < ArenaCellCount);
-    bits.set(cellIndex);
 }
 
 inline void
 ArenaCellSet::check() const
 {
-#ifdef DEBUG
-    bool bitsZero = bits.isAllClear();
-    MOZ_ASSERT(isEmpty() == bitsZero);
-    MOZ_ASSERT(isEmpty() == !arena);
-    MOZ_ASSERT_IF(!isEmpty(), arena->bufferedCells == this);
-#endif
 }
 
 inline void
 StoreBuffer::putWholeCell(Cell* cell)
 {
-    MOZ_ASSERT(cell->isTenured());
-
-    Arena* arena = cell->asTenured().arena();
-    ArenaCellSet* cells = arena->bufferedCells;
-    if (cells->isEmpty()) {
-        cells = AllocateWholeCellSet(arena);
-        if (!cells)
-            return;
-    }
-
-    cells->putCell(&cell->asTenured());
-    cells->check();
 }
 
 } // namespace gc
