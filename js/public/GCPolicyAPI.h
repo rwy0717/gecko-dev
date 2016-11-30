@@ -133,7 +133,7 @@ struct GCPolicy<JS::Heap<T>>
         TraceEdge(trc, thingp, name);
     }
     static bool needsSweep(JS::Heap<T>* thingp) {
-        return js::gc::EdgeNeedsSweep(thingp);
+        return false;
     }
 };
 

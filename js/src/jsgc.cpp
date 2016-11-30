@@ -215,6 +215,7 @@
 #include "gc/FindSCCs.h"
 #include "gc/GCInternals.h"
 #include "gc/GCTrace.h"
+#include "gc/Heap-inl.h"
 #include "gc/Marking.h"
 #include "gc/Memory.h"
 #include "gc/Policy.h"
@@ -259,6 +260,22 @@ const AllocKind gc::slotsToThingKind[] = {
     /* 12 */ AllocKind::OBJECT12, AllocKind::OBJECT16, AllocKind::OBJECT16, AllocKind::OBJECT16,
     /* 16 */ AllocKind::OBJECT16
 };
+
+ const uint32_t Arena::ThingSizes[] = {
+ #define EXPAND_THING_SIZE(allocKind, traceKind, type, sizedType) \
+     sizeof(sizedType),
+ FOR_EACH_ALLOCKIND(EXPAND_THING_SIZE)
+ #undef EXPAND_THING_SIZE
+ };
+
+ #define COUNT(type) 1
+
+ const uint32_t Arena::ThingsPerArena[] = {
+ #define EXPAND_THINGS_PER_ARENA(allocKind, traceKind, type, sizedType) \
+     COUNT(sizedType),
+ FOR_EACH_ALLOCKIND(EXPAND_THINGS_PER_ARENA)
+ #undef EXPAND_THINGS_PER_ARENA
+ };
 
 template<>
 JSObject*
@@ -616,7 +633,7 @@ GCRuntime::maybeGC(Zone* zone)
 unsigned
 js::GetCPUCount()
 {
-    return 0;
+    return 1;
 }
 
 void
@@ -691,16 +708,6 @@ InCrossCompartmentMap(JSObject* src, JS::GCCellPtr dst)
 struct MaybeCompartmentFunctor {
     template <typename T> JSCompartment* operator()(T* t) { return t->maybeCompartment(); }
 };
-
-void
-CompartmentCheckTracer::onChild(const JS::GCCellPtr& thing)
-{
-}
-
-void
-GCRuntime::checkForCompartmentMismatches()
-{
-}
 #endif
 
 #ifdef JS_GC_ZEAL
@@ -731,27 +738,13 @@ class js::gc::MarkingValidator
     ~MarkingValidator();
     void nonIncrementalMark(AutoLockForExclusiveAccess& lock);
     void validate();
-
-  private:
-    GCRuntime* gc;
-    bool initialized;
-
-    typedef HashMap<Chunk*, ChunkBitmap*, GCChunkHasher, SystemAllocPolicy> BitmapMap;
-    BitmapMap map;
 };
 
 js::gc::MarkingValidator::MarkingValidator(GCRuntime* gc)
-  : gc(gc),
-    initialized(false)
 {}
 
 js::gc::MarkingValidator::~MarkingValidator()
 {
-    if (!map.initialized())
-        return;
-
-    for (BitmapMap::Range r(map.all()); !r.empty(); r.popFront())
-        js_delete(r.front().value());
 }
 
 void
@@ -1068,8 +1061,20 @@ JSCompartment*
 js::NewCompartment(JSContext* cx, Zone* zone, JSPrincipals* principals,
                    const JS::CompartmentOptions& options)
 {
-	return nullptr;
+	if (!zone) {
+		JSRuntime* rt = cx->runtime();
+		zone = cx->new_<Zone>(rt);
+
+		Cell::arena = new Arena();
+		Cell::arena->init(zone, AllocKind::OBJECT0);
+	}
+	ScopedJSDeletePtr<JSCompartment> compartment(cx->new_<JSCompartment>(zone, options));
+	compartment->init(cx);
+	return compartment.forget();
 }
+
+
+Arena* js::gc::Cell::arena = nullptr;
 
 void
 gc::MergeCompartments(JSCompartment* source, JSCompartment* target)
@@ -1086,11 +1091,6 @@ bool
 GCRuntime::selectForMarking(JSObject* object)
 {
     return true;
-}
-
-void
-GCRuntime::clearSelectedForMarking()
-{
 }
 
 void
@@ -1229,13 +1229,6 @@ JS::GCCellPtr::mayBeOwnedByOtherRuntime() const
 {
     return false;
 }
-
-#ifdef JSGC_HASH_TABLE_CHECKS
-void
-js::gc::CheckHashTablesAfterMovingGC(JSRuntime* rt)
-{
-}
-#endif
 
 JS_PUBLIC_API(void)
 JS::PrepareZoneForGC(Zone* zone)

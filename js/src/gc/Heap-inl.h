@@ -12,6 +12,8 @@
 inline void
 js::gc::Arena::init(JS::Zone* zoneArg, AllocKind kind)
 {
+    zone = zoneArg;
+    allocKind = size_t(kind);
 }
 
 #endif

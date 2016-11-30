@@ -828,7 +828,7 @@ GCState(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    const char* state = StateName(cx->runtime()->gc.state());
+    const char* state = ""; //StateName(cx->runtime()->gc.state());
     JSString* str = JS_NewStringCopyZ(cx, state);
     if (!str)
         return false;

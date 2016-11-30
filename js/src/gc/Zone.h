@@ -304,8 +304,7 @@ struct Zone : public JS::shadow::Zone,
     }
 
     uint64_t getUniqueIdInfallible(js::gc::Cell* cell) {
-        uint64_t uid;
-        return uid;
+        return 0;
     }
 
     // Return true if this cell has a UID associated with it.

@@ -44,4 +44,17 @@ using mozilla::PodZero;
 void
 js::Nursery::disable()
 {
+
+}
+
+JSObject*
+js::Nursery::allocateObject(JSContext* cx, size_t size, size_t numDynamic, const js::Class* clasp) {
+	JSObject* obj = (JSObject *)js_malloc(size);
+	if (obj) {
+		if (numDynamic > 0)
+			obj->setInitialSlotsMaybeNonNative((HeapSlot *)js_malloc(numDynamic * sizeof(HeapSlot *)));
+		else
+			obj->setInitialSlotsMaybeNonNative(nullptr);
+	}
+	return obj;
 }

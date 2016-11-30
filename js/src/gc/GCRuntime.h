@@ -84,13 +84,13 @@ class GCRuntime
 	void onOutOfMallocMemory();
 
 #ifdef JS_GC_ZEAL
-    const void* addressOfZealModeBits() { return &zealModeBits; }
-    void getZealBits(uint32_t* zealBits, uint32_t* frequency, uint32_t* nextScheduled) {}
-    void setZeal(uint8_t zeal, uint32_t frequency) {}
-    bool parseAndSetZeal(const char* str) { return true; }
-    void setNextScheduled(uint32_t count) {}
-	bool selectForMarking(JSObject* object) { return true; }
-	void setDeterministic(bool enable) {}
+    const void* addressOfZealModeBits() { return nullptr; }
+    void getZealBits(uint32_t* zealBits, uint32_t* frequency, uint32_t* nextScheduled);
+    void setZeal(uint8_t zeal, uint32_t frequency);
+    bool parseAndSetZeal(const char* str);
+    void setNextScheduled(uint32_t count);
+	bool selectForMarking(JSObject* object);
+	void setDeterministic(bool enable);
 #endif
 
 #ifdef DEBUG
@@ -113,7 +113,7 @@ class GCRuntime
     }
 
 #ifdef DEBUG
-    bool isAllocAllowed() { true; }
+    bool isAllocAllowed() { return true; }
     void disallowAlloc() { }
 
 	bool isStrictProxyCheckingEnabled() { return false; }
@@ -152,14 +152,14 @@ class GCRuntime
 
     uint64_t majorGCCount() const { return 0; }
 
-	bool isFullGc() const { return true; }
+	bool isFullGc() const { return false; }
 
 	bool areGrayBitsValid() const { return true; }
 
-	bool fullGCForAtomsRequested() const { return true; }
+	bool fullGCForAtomsRequested() const { return false; }
 
 #ifdef JS_GC_ZEAL
-    bool isVerifyPreBarriersEnabled() const { return true; }
+    bool isVerifyPreBarriersEnabled() const { return false; }
 #else
     bool isVerifyPreBarriersEnabled() const { return false; }
 #endif

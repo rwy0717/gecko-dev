@@ -68,7 +68,7 @@ class CompartmentChecker
     }
 
     void check(JSObject* obj) {
-        MOZ_ASSERT_IF(obj, IsInsideNursery(obj) || !obj->asTenured().isMarked(gc::GRAY));
+        //MOZ_ASSERT_IF(obj, IsInsideNursery(obj) || !obj->asTenured().isMarked(gc::GRAY));
         if (obj)
             check(obj->compartment());
     }
@@ -435,8 +435,8 @@ js::ExclusiveContext::setCompartment(JSCompartment* comp,
     MOZ_ASSERT_IF(runtime_->isAtomsCompartment(comp), maybeLock != nullptr);
 
     // Make sure that the atoms compartment has its own zone.
-    MOZ_ASSERT_IF(comp && !runtime_->isAtomsCompartment(comp),
-                  !comp->zone()->isAtomsZone());
+    //MOZ_ASSERT_IF(comp && !runtime_->isAtomsCompartment(comp),
+    //              !comp->zone()->isAtomsZone());
 
     // Both the current and the new compartment should be properly marked as
     // entered at this point.

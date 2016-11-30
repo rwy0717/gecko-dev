@@ -57,6 +57,12 @@ enum class State {
  * The AllocKind is available as MapTypeToFinalizeKind<SomeType>::kind.
  */
 template <typename T> struct MapTypeToFinalizeKind {};
+#define EXPAND_MAPTYPETOFINALIZEKIND(allocKind, traceKind, type, sizedType) \
+    template <> struct MapTypeToFinalizeKind<type> { \
+        static const AllocKind kind = AllocKind::allocKind; \
+};
+FOR_EACH_NONOBJECT_ALLOCKIND(EXPAND_MAPTYPETOFINALIZEKIND)
+#undef EXPAND_MAPTYPETOFINALIZEKIND
 
 template <typename T> struct ParticipatesInCC {};
 
@@ -78,26 +84,44 @@ CanBeFinalizedInBackground(AllocKind kind, const Class* clasp)
     return false;
 }
 
+/* Capacity for slotsToThingKind */
+const size_t SLOTS_TO_THING_KIND_LIMIT = 17;
+
 extern const AllocKind slotsToThingKind[];
 
 /* Get the best kind to use when making an object with the given slot count. */
 static inline AllocKind
 GetGCObjectKind(size_t numSlots)
 {
-    return AllocKind::OBJECT16;
+    if (numSlots >= SLOTS_TO_THING_KIND_LIMIT)
+        return AllocKind::OBJECT16;
+    return slotsToThingKind[numSlots];
 }
 
 /* As for GetGCObjectKind, but for dense array allocation. */
 static inline AllocKind
 GetGCArrayKind(size_t numElements)
 {
-    return AllocKind::OBJECT2;
+    /*
+     * Dense arrays can use their fixed slots to hold their elements array
+     * (less two Values worth of ObjectElements header), but if more than the
+     * maximum number of fixed slots is needed then the fixed slots will be
+     * unused.
+     */
+    JS_STATIC_ASSERT(ObjectElements::VALUES_PER_HEADER == 2);
+    if (numElements > NativeObject::MAX_DENSE_ELEMENTS_COUNT ||
+        numElements + ObjectElements::VALUES_PER_HEADER >= SLOTS_TO_THING_KIND_LIMIT)
+    {
+        return AllocKind::OBJECT2;
+    }
+    return slotsToThingKind[numElements + ObjectElements::VALUES_PER_HEADER];
 }
 
 static inline AllocKind
 GetGCObjectFixedSlotsKind(size_t numFixedSlots)
 {
-    return AllocKind::OBJECT2;
+    MOZ_ASSERT(numFixedSlots < SLOTS_TO_THING_KIND_LIMIT);
+    return slotsToThingKind[numFixedSlots];
 }
 
 // Get the best kind to use when allocating an object that needs a specific
@@ -105,13 +129,23 @@ GetGCObjectFixedSlotsKind(size_t numFixedSlots)
 static inline AllocKind
 GetGCObjectKindForBytes(size_t nbytes)
 {
-    return AllocKind::OBJECT0;
+    MOZ_ASSERT(nbytes <= JSObject::MAX_BYTE_SIZE);
+
+    if (nbytes <= sizeof(NativeObject))
+        return AllocKind::OBJECT0;
+    nbytes -= sizeof(NativeObject);
+
+    size_t dataSlots = AlignBytes(nbytes, sizeof(Value)) / sizeof(Value);
+    MOZ_ASSERT(nbytes <= dataSlots * sizeof(Value));
+    return GetGCObjectKind(dataSlots);
 }
 
 static inline AllocKind
 GetBackgroundAllocKind(AllocKind kind)
 {
-    return AllocKind::OBJECT2;
+    MOZ_ASSERT(!IsBackgroundFinalized(kind));
+    MOZ_ASSERT(IsObjectAllocKind(kind));
+    return AllocKind(size_t(kind) + 1);
 }
 
 /* Get the number of fixed slots and initial capacity associated with a kind. */
@@ -148,13 +182,28 @@ GetGCKindSlots(AllocKind thingKind)
 static inline size_t
 GetGCKindSlots(AllocKind thingKind, const Class* clasp)
 {
-    return 0;
+    size_t nslots = GetGCKindSlots(thingKind);
+
+    /* An object's private data uses the space taken by its last fixed slot. */
+    if (clasp->flags & JSCLASS_HAS_PRIVATE) {
+        MOZ_ASSERT(nslots > 0);
+        nslots--;
+    }
+
+    /*
+     * Functions have a larger alloc kind than AllocKind::OBJECT to reserve
+     * space for the extra fields in JSFunction, but have no fixed slots.
+     */
+    if (clasp == FunctionClassPtr)
+        nslots = 0;
+
+    return nslots;
 }
 
 static inline size_t
 GetGCKindBytes(AllocKind thingKind)
 {
-    return 0;
+    return sizeof(JSObject_Slots0) + GetGCKindSlots(thingKind) * sizeof(Value);
 }
 
 // Class to assist in triggering background chunk allocation. This cannot be done
@@ -516,11 +565,15 @@ enum VerifierType {
 extern const char* ZealModeHelpText;
 
 /* Check that write barriers have been used correctly. See jsgc.cpp. */
-void
-VerifyBarriers(JSRuntime* rt, VerifierType type);
+static void
+VerifyBarriers(JSRuntime* rt, VerifierType type)
+{
+}
 
-void
-MaybeVerifyBarriers(JSContext* cx, bool always = false);
+static void
+MaybeVerifyBarriers(JSContext* cx, bool always = false)
+{
+}
 
 #else
 
@@ -557,11 +610,8 @@ class MOZ_RAII JS_HAZ_GC_SUPPRESSED AutoSuppressGC
 struct MOZ_RAII AutoAssertNoNurseryAlloc
 {
 #ifdef DEBUG
-    explicit AutoAssertNoNurseryAlloc(JSRuntime* rt) {}
-    ~AutoAssertNoNurseryAlloc() {}
-
-  private:
-    gc::GCRuntime& gc;
+    explicit AutoAssertNoNurseryAlloc(JSRuntime* rt);
+    ~AutoAssertNoNurseryAlloc();
 #else
     explicit AutoAssertNoNurseryAlloc(JSRuntime* rt) {}
 #endif
@@ -660,8 +710,6 @@ class MOZ_RAII AutoEmptyNursery : public AutoAssertEmptyNursery
 /* Use this to avoid assertions when manipulating the wrapper map. */
 class MOZ_RAII AutoDisableProxyCheck
 {
-    gc::GCRuntime& gc;
-
   public:
     explicit AutoDisableProxyCheck(JSRuntime* rt);
     ~AutoDisableProxyCheck();

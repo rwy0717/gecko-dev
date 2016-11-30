@@ -1065,18 +1065,18 @@ class MOZ_RAII AutoSuppressAllocationMetadataBuilder {
 
   public:
     explicit AutoSuppressAllocationMetadataBuilder(ExclusiveContext* cx)
-      : AutoSuppressAllocationMetadataBuilder(cx->compartment()->zone())
+    //  : AutoSuppressAllocationMetadataBuilder(cx->compartment()->zone())
     { }
 
     explicit AutoSuppressAllocationMetadataBuilder(JS::Zone* zone)
-      : zone(zone),
-        saved(zone->suppressAllocationMetadataBuilder)
+    //  : zone(zone),
+    //    saved(zone->suppressAllocationMetadataBuilder)
     {
-        zone->suppressAllocationMetadataBuilder = true;
+        //zone->suppressAllocationMetadataBuilder = true;
     }
 
     ~AutoSuppressAllocationMetadataBuilder() {
-        zone->suppressAllocationMetadataBuilder = saved;
+        //zone->suppressAllocationMetadataBuilder = saved;
     }
 };
 

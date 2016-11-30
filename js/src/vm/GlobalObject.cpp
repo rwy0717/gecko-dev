@@ -394,7 +394,7 @@ GlobalScope&
 GlobalObject::emptyGlobalScope() const
 {
     const Value& v = getReservedSlot(EMPTY_GLOBAL_SCOPE);
-    MOZ_ASSERT(v.isPrivateGCThing() && v.traceKind() == JS::TraceKind::Scope);
+    //MOZ_ASSERT(v.isPrivateGCThing() && v.traceKind() == JS::TraceKind::Scope);
     return static_cast<Scope*>(v.toGCThing())->as<GlobalScope>();
 }
 

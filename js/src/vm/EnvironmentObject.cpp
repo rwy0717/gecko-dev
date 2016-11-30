@@ -842,7 +842,7 @@ LexicalEnvironmentObject::createTemplateObject(JSContext* cx, HandleShape shape,
         return nullptr;
 
     gc::AllocKind allocKind = gc::GetGCObjectKind(shape->numFixedSlots());
-    MOZ_ASSERT(CanBeFinalizedInBackground(allocKind, &LexicalEnvironmentObject::class_));
+    //MOZ_ASSERT(CanBeFinalizedInBackground(allocKind, &LexicalEnvironmentObject::class_));
     allocKind = GetBackgroundAllocKind(allocKind);
     RootedNativeObject obj(cx,
         MaybeNativeObject(JSObject::create(cx, allocKind, heap, shape, group)));

@@ -23,18 +23,19 @@ namespace js {
 // nursery cannot accomodate the allocation, the malloc heap will be used
 // instead.
 
+// OMRTODO: Use nursery.allocateBuffer
 template <typename T>
 static inline T*
 AllocateObjectBuffer(ExclusiveContext* cx, uint32_t count)
 {
-    return nullptr;
+    return (T *)js_malloc(sizeof(T) * count);
 }
 
 template <typename T>
 static inline T*
 AllocateObjectBuffer(ExclusiveContext* cx, JSObject* obj, uint32_t count)
 {
-    return nullptr;
+    return (T *)js_malloc(sizeof(T) * count);
 }
 
 // If this returns null then the old buffer will be left alone.
@@ -43,7 +44,10 @@ static inline T*
 ReallocateObjectBuffer(ExclusiveContext* cx, JSObject* obj, T* oldBuffer,
                        uint32_t oldCount, uint32_t newCount)
 {
-    return nullptr;
+	T *newBuffer = (T *)js_malloc(sizeof(T) * newCount);
+	memcpy(oldBuffer, newBuffer, sizeof(T) * oldCount);
+	free(oldBuffer);
+    return newBuffer;
 }
 
 } // namespace js

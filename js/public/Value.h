@@ -895,12 +895,13 @@ JSVAL_TO_PRIVATE_PTR_IMPL(const jsval_layout& l)
 static inline jsval_layout
 PRIVATE_GCTHING_TO_JSVAL_IMPL(js::gc::Cell* cell)
 {
-    MOZ_ASSERT(JS::GCThingTraceKind(cell) != JS::TraceKind::String,
+    /*MOZ_ASSERT(JS::GCThingTraceKind(cell) != JS::TraceKind::String,
                "Private GC thing Values must not be strings. Make a StringValue instead.");
     MOZ_ASSERT(JS::GCThingTraceKind(cell) != JS::TraceKind::Symbol,
                "Private GC thing Values must not be symbols. Make a SymbolValue instead.");
     MOZ_ASSERT(JS::GCThingTraceKind(cell) != JS::TraceKind::Object,
                "Private GC thing Values must not be objects. Make an ObjectValue instead.");
+	*/
 
     jsval_layout l;
     uint64_t cellBits = (uint64_t)cell;
