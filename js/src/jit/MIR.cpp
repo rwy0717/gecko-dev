@@ -835,6 +835,10 @@ MakeUnknownTypeSet()
 bool
 jit::IonCompilationCanUseNurseryPointers()
 {
+    // OMRTODO: Nursery pointers aren't as much a thing in the GC
+#ifdef OMR
+    return true;
+#else // OMR
     // If we are doing backend compilation, which could occur on a helper
     // thread but might actually be on the main thread, check the flag set on
     // the PerThreadData by AutoEnterIonCompilation.
@@ -846,6 +850,7 @@ jit::IonCompilationCanUseNurseryPointers()
     // or in progress Ion compilations.
     JSRuntime* rt = TlsPerThreadData.get()->runtimeFromMainThread();
     return rt->gc.storeBuffer.cancelIonCompilations();
+#endif // OMR
 }
 
 #endif // DEBUG

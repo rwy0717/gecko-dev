@@ -261,6 +261,17 @@ const AllocKind gc::slotsToThingKind[] = {
     /* 16 */ AllocKind::OBJECT16
 };
 
+#ifdef OMR // Sizes
+
+ const uint32_t OmrGcHelper::thingSizes[] = {
+ #define EXPAND_THING_SIZE(allocKind, traceKind, type, sizedType) \
+     sizeof(sizedType),
+ FOR_EACH_ALLOCKIND(EXPAND_THING_SIZE)
+ #undef EXPAND_THING_SIZE
+ };
+
+#else // OMR Sizes
+
  const uint32_t Arena::ThingSizes[] = {
  #define EXPAND_THING_SIZE(allocKind, traceKind, type, sizedType) \
      sizeof(sizedType),
@@ -277,6 +288,9 @@ const AllocKind gc::slotsToThingKind[] = {
  #undef EXPAND_THINGS_PER_ARENA
  };
 
+#endif // ! OMR Sizes
+
+#ifndef OMR // Arena
 template<>
 JSObject*
 ArenaCellIterImpl::get<JSObject>() const
@@ -296,6 +310,7 @@ Arena::finalize(FreeOp* fop, AllocKind thingKind, size_t thingSize)
 {
     return 0;
 }
+#endif // ! OMR  Arena
 
 #ifdef JS_GC_ZEAL
 
@@ -520,14 +535,18 @@ UpdateCellPointers(MovingTracer* trc, T* cell)
 {
 }
 
+#ifndef OMR // Arena
 template <typename T>
 static void
 UpdateArenaPointersTyped(MovingTracer* trc, Arena* arena, JS::TraceKind traceKind)
 {
 }
+#endif // ! OMR Arena
 
 namespace js {
 namespace gc {
+
+#ifndef OMR // Arena
 
 struct ArenaListSegment
 {
@@ -563,6 +582,8 @@ struct UpdatePointersTask : public GCParallelTask
     ~UpdatePointersTask() override { join(); }
 };
 
+#endif // ! OMR Arena
+
 } // namespace gc
 } // namespace js
 
@@ -593,10 +614,12 @@ static const size_t MaxCellUpdateBackgroundTasks = 8;
 // Since we want to minimize the number of phases, we put everything else into
 // the first phase and label it the 'misc' phase.
 
+#ifndef OMR // Arena
 void
 ReleaseArenaList(JSRuntime* rt, Arena* arena, const AutoLockGC& lock)
 {
 }
+#endif // ! OMR Arena
 
 SliceBudget::SliceBudget()
   : timeBudget(UnlimitedTimeBudget), workBudget(UnlimitedWorkBudget)
@@ -712,6 +735,7 @@ struct MaybeCompartmentFunctor {
 
 #ifdef JS_GC_ZEAL
 
+#ifndef OMR // Chunk
 struct GCChunkHasher {
     typedef gc::Chunk* Lookup;
 
@@ -730,6 +754,7 @@ struct GCChunkHasher {
         return k == l;
     }
 };
+#endif // ! OMR Chunk
 
 class js::gc::MarkingValidator
 {
@@ -932,12 +957,14 @@ SweepMiscTask::run()
 
 using WeakCacheTaskVector = mozilla::Vector<SweepWeakCacheTask, 0, SystemAllocPolicy>;
 
+#ifndef OMR // ArenaList
 template <typename T, typename... Args>
 static bool
 SweepArenaList(Arena** arenasToSweep, SliceBudget& sliceBudget, Args... args)
 {
     return true;
 }
+#endif // ! OMR ArenaList
 
 namespace {
 
@@ -1064,17 +1091,16 @@ js::NewCompartment(JSContext* cx, Zone* zone, JSPrincipals* principals,
 	if (!zone) {
 		JSRuntime* rt = cx->runtime();
 		zone = cx->new_<Zone>(rt);
-
-		Cell::arena = new Arena();
-		Cell::arena->init(zone, AllocKind::OBJECT0);
+#ifdef OMR
+        fprintf(stderr, "** New zone %p\n", zone);
+        // OMRTODO: Use multiple zones from a context correctly.
+        OmrGcHelper::zone = zone;
+#endif
 	}
 	ScopedJSDeletePtr<JSCompartment> compartment(cx->new_<JSCompartment>(zone, options));
 	compartment->init(cx);
 	return compartment.forget();
 }
-
-
-Arena* js::gc::Cell::arena = nullptr;
 
 void
 gc::MergeCompartments(JSCompartment* source, JSCompartment* target)
@@ -1406,7 +1432,8 @@ NewMemoryInfoObject(JSContext* cx)
     if (!obj)
         return nullptr;
 
-    /*using namespace MemInfo;
+#ifndef OMR
+    using namespace MemInfo;
     struct NamedGetter {
         const char* name;
         JSNative getter;
@@ -1467,7 +1494,8 @@ NewMemoryInfoObject(JSContext* cx)
         {
             return nullptr;
         }
-    }*/
+    }
+#endif // ! OMR
 	return obj;
 }
 
@@ -1489,6 +1517,12 @@ AutoAssertEmptyNursery::checkCondition(JSRuntime *rt) {
 AutoEmptyNursery::AutoEmptyNursery(JSRuntime *rt)
 {
 }
+
+// OMR GC Helper
+#ifdef OMR
+Zone* OmrGcHelper::zone;
+GCRuntime* OmrGcHelper::runtime;
+#endif // OMR
 
 } /* namespace gc */
 } /* namespace js */

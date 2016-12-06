@@ -1249,9 +1249,9 @@ Shape::Shape(const StackShape& other, uint32_t nfixed)
     parent(nullptr)
 {
 #ifdef DEBUG
-    //gc::AllocKind allocKind = getAllocKind();
-    //MOZ_ASSERT_IF(other.isAccessorShape(), allocKind == gc::AllocKind::ACCESSOR_SHAPE);
-    //MOZ_ASSERT_IF(allocKind == gc::AllocKind::SHAPE, !other.isAccessorShape());
+    gc::AllocKind allocKind = getAllocKind();
+    MOZ_ASSERT_IF(other.isAccessorShape(), allocKind == gc::AllocKind::ACCESSOR_SHAPE);
+    MOZ_ASSERT_IF(allocKind == gc::AllocKind::SHAPE, !other.isAccessorShape());
 #endif
 
     MOZ_ASSERT_IF(attrs & (JSPROP_GETTER | JSPROP_SETTER), attrs & JSPROP_SHARED);
@@ -1261,6 +1261,7 @@ Shape::Shape(const StackShape& other, uint32_t nfixed)
 // This class is used to add a post barrier on the AccessorShape's getter/setter
 // objects. It updates the pointers and the shape's entry in the parent's
 // KidsHash table.
+// OMRTODO: Bufferable Ref and Write barrier implementation
 class ShapeGetterSetterRef : public gc::BufferableRef
 {
     AccessorShape* shape_;
@@ -1273,6 +1274,7 @@ class ShapeGetterSetterRef : public gc::BufferableRef
 static inline void
 GetterSetterWriteBarrierPost(AccessorShape* shape)
 {
+#ifndef OMR // Writebarriers
     MOZ_ASSERT(shape);
     if (shape->hasGetterObject()) {
         gc::StoreBuffer* sb = reinterpret_cast<gc::Cell*>(shape->getterObject())->storeBuffer();
@@ -1288,6 +1290,7 @@ GetterSetterWriteBarrierPost(AccessorShape* shape)
             return;
         }
     }
+#endif // ! OMR Writebarriers
 }
 
 inline
@@ -1296,7 +1299,7 @@ AccessorShape::AccessorShape(const StackShape& other, uint32_t nfixed)
     rawGetter(other.rawGetter),
     rawSetter(other.rawSetter)
 {
-    //MOZ_ASSERT(getAllocKind() == gc::AllocKind::ACCESSOR_SHAPE);
+    MOZ_ASSERT(getAllocKind() == gc::AllocKind::ACCESSOR_SHAPE);
     GetterSetterWriteBarrierPost(this);
 }
 

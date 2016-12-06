@@ -914,7 +914,9 @@ ExclusiveContext::ExclusiveContext(JSRuntime* rt, PerThreadData* pt, ContextKind
     contextKind_(kind),
     options_(options),
     perThreadData(pt),
+#ifndef OMR
     arenas_(nullptr),
+#endif
     enterCompartmentDepth_(0)
 {
 }

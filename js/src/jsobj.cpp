@@ -1559,9 +1559,12 @@ JSObject::swap(JSContext* cx, HandleObject a, HandleObject b)
      * Neither object may be in the nursery, but ensure we update any embedded
      * nursery pointers in either object.
      */
-    //MOZ_ASSERT(!IsInsideNursery(a) && !IsInsideNursery(b));
+#ifndef OMR // Writebarrier
+    // OMRTODO: Writebarriers here
+    MOZ_ASSERT(!IsInsideNursery(a) && !IsInsideNursery(b));
     cx->runtime()->gc.storeBuffer.putWholeCell(a);
     cx->runtime()->gc.storeBuffer.putWholeCell(b);
+#endif // ! OMR Writebarrier
 
     unsigned r = NotifyGCPreSwap(a, b);
 
@@ -3671,7 +3674,9 @@ JSObject::allocKindForTenure(const js::Nursery& nursery) const
 {
     return getAllocKind();
 
-#if 0 // OMR
+    // OMRTODO: Check that alloc kind matches the store one
+
+#if !defined(OMR)
     if (is<ArrayObject>()) {
         const ArrayObject& aobj = as<ArrayObject>();
         MOZ_ASSERT(aobj.numFixedSlots() == 0);
@@ -3741,7 +3746,7 @@ JSObject::allocKindForTenure(const js::Nursery& nursery) const
     if (!CanBeFinalizedInBackground(kind, getClass()))
         return kind;
     return GetBackgroundAllocKind(kind);
-#endif // allocKind
+#endif // !OMR
 }
 
 
@@ -3808,7 +3813,12 @@ JSObject::sizeOfIncludingThisInNursery() const
     MOZ_ASSERT(!isTenured());
 
     const Nursery& nursery = compartment()->runtimeFromAnyThread()->gc.nursery;
+#ifdef OMR
+    // OMRTODO: Allockind from nursery? What?
+    size_t size = OmrGcHelper::thingSize(allocKindForTenure(nursery));
+#else
     size_t size = Arena::thingSize(allocKindForTenure(nursery));
+#endif
 
     if (is<NativeObject>()) {
         const NativeObject& native = as<NativeObject>();

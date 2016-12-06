@@ -189,7 +189,9 @@ struct Zone : public JS::shadow::Zone,
      */
     bool suppressAllocationMetadataBuilder;
 
+#ifndef OMR
     js::gc::ArenaLists arenas;
+#endif // OMR
 
     js::TypeZone types;
 

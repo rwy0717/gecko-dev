@@ -185,7 +185,10 @@ void
 CompileRuntime::setMinorGCShouldCancelIonCompilations()
 {
     MOZ_ASSERT(onMainThread());
+#ifndef OMR // JIT/GC
+    // OMRTODO: Allow GC to cancel compilations
     runtime()->gc.storeBuffer.setShouldCancelIonCompilations();
+#endif // ! OMR JIT/GC
 }
 
 bool
@@ -215,7 +218,11 @@ CompileZone::addressOfNeedsIncrementalBarrier()
 const void*
 CompileZone::addressOfFreeList(gc::AllocKind allocKind)
 {
+#ifdef OMR
+    return nullptr; // OMRTODO: How is the free list being used?
+#else
     return zone()->arenas.addressOfFreeList(allocKind);
+#endif
 }
 
 JSCompartment*

@@ -94,7 +94,6 @@ struct HelperThread;
 class ExclusiveContext : public ContextFriendFields,
                          public MallocProvider<ExclusiveContext>
 {
-    friend class gc::ArenaLists;
     friend class AutoCompartment;
     friend class AutoLockForExclusiveAccess;
     friend struct StackBaseShape;
@@ -167,15 +166,12 @@ class ExclusiveContext : public ContextFriendFields,
         return runtime_ == rt;
     }
 
-  protected:
-    js::gc::ArenaLists* arenas_;
-
   public:
-    inline js::gc::ArenaLists* arenas() const { return arenas_; }
 
     template <typename T>
     bool isInsideCurrentZone(T thing) const {
-        return thing->zoneFromAnyThread() == zone_;
+        // TODO: Can't access zone from thing.
+        // return thing->zoneFromAnyThread() == zone_;
     }
 
     template <typename T>

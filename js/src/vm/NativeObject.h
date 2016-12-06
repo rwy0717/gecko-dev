@@ -475,9 +475,15 @@ class NativeObject : public ShapedObject
     }
 
     bool isInWholeCellBuffer() const {
+#ifdef OMR // Writebarriers
+        // OMRTODO: What are cell buffers and why are they tied to an arena?
+        // I think they are just used to 
+        return true;
+#else // OMR Writebarriers
         const gc::TenuredCell* cell = &asTenured();
         gc::ArenaCellSet* cells = cell->arena()->bufferedCells;
         return cells && cells->hasCell(cell);
+#endif // ! OMR Writebarriers
     }
 
   protected:
@@ -1001,6 +1007,9 @@ class NativeObject : public ShapedObject
     // Run a post write barrier that encompasses multiple contiguous elements in a
     // single step.
     inline void elementsRangeWriteBarrierPost(uint32_t start, uint32_t count) {
+#ifdef OMR // Writebarrier
+        return;
+#else // OMR Writebarrier
         for (size_t i = 0; i < count; i++) {
             const Value& v = elements_[start + i];
             if (v.isObject() && IsInsideNursery(&v.toObject())) {
@@ -1010,6 +1019,7 @@ class NativeObject : public ShapedObject
                 return;
             }
         }
+#endif // ! OMR Writebarrier
     }
 
   public:
@@ -1054,6 +1064,11 @@ class NativeObject : public ShapedObject
     void copyDenseElements(uint32_t dstStart, const Value* src, uint32_t count) {
         MOZ_ASSERT(dstStart + count <= getDenseCapacity());
         MOZ_ASSERT(!denseElementsAreCopyOnWrite());
+#ifdef OMR // Writebarriers
+        // OMRTODO: Add write barrier calls here
+        memcpy(&elements_[dstStart], src, count * sizeof(HeapSlot));
+#else // OMR Writebarriers
+        // OMRTODO: Obtain the zone from a context
         if (JS::shadow::Zone::asShadowZone(zone())->needsIncrementalBarrier()) {
             for (uint32_t i = 0; i < count; ++i)
                 elements_[dstStart + i].set(this, HeapSlot::Element, dstStart + i, src[i]);
@@ -1061,6 +1076,7 @@ class NativeObject : public ShapedObject
             memcpy(&elements_[dstStart], src, count * sizeof(HeapSlot));
             elementsRangeWriteBarrierPost(dstStart, count);
         }
+#endif // ! OMR Writebarriers
     }
 
     void initDenseElements(uint32_t dstStart, const Value* src, uint32_t count) {
@@ -1087,6 +1103,11 @@ class NativeObject : public ShapedObject
          * write barrier is invoked here on B, despite the fact that it exists in
          * the array before and after the move.
         */
+#if defined OMR // Writebarriers
+        // OMRTODO: Pull the zone from a context
+        // OMRTODO: Write barriers
+        memmove(elements_ + dstStart, elements_ + srcStart, count * sizeof(HeapSlot));
+#else // OMR
         if (JS::shadow::Zone::asShadowZone(zone())->needsIncrementalBarrier()) {
             if (dstStart < srcStart) {
                 HeapSlot* dst = elements_ + dstStart;
@@ -1103,10 +1124,13 @@ class NativeObject : public ShapedObject
             memmove(elements_ + dstStart, elements_ + srcStart, count * sizeof(HeapSlot));
             elementsRangeWriteBarrierPost(dstStart, count);
         }
+#endif // OMR
     }
 
     void moveDenseElementsNoPreBarrier(uint32_t dstStart, uint32_t srcStart, uint32_t count) {
+#ifndef OMR // Zone from context
         MOZ_ASSERT(!shadowZone()->needsIncrementalBarrier());
+#endif // ! OMR
 
         MOZ_ASSERT(dstStart + count <= getDenseCapacity());
         MOZ_ASSERT(srcStart + count <= getDenseCapacity());
@@ -1216,12 +1240,15 @@ class NativeObject : public ShapedObject
     inline void privateWriteBarrierPre(void** oldval);
 
     void privateWriteBarrierPost(void** pprivate) {
+#ifndef OMR // Writebarrier
+        // OMRTODO: Writebarrier
         gc::Cell** cellp = reinterpret_cast<gc::Cell**>(pprivate);
         MOZ_ASSERT(cellp);
         MOZ_ASSERT(*cellp);
         gc::StoreBuffer* storeBuffer = (*cellp)->storeBuffer();
         if (storeBuffer)
             storeBuffer->putCell(cellp);
+#endif // OMR
     }
 
     /* Private data accessors. */
@@ -1301,9 +1328,12 @@ class PlainObject : public NativeObject
 inline void
 NativeObject::privateWriteBarrierPre(void** oldval)
 {
+#ifndef OMR // Writebarrier
+    // OMRTODO: Writebarrier
     JS::shadow::Zone* shadowZone = this->shadowZoneFromAnyThread();
     if (shadowZone->needsIncrementalBarrier() && *oldval && getClass()->hasTrace())
         getClass()->doTrace(shadowZone->barrierTracer(), this);
+#endif // ! OMR Writebarrier
 }
 
 #ifdef DEBUG

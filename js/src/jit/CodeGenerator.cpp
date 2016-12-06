@@ -3400,6 +3400,7 @@ CodeGenerator::visitMonitorTypes(LMonitorTypes* lir)
     bailoutFrom(&miss, lir->snapshot());
 }
 
+// OMRTODO: What is the OutOfLineCodeBase
 // Out-of-line path to update the store buffer.
 class OutOfLineCallPostWriteBarrier : public OutOfLineCodeBase<CodeGenerator>
 {
@@ -3423,6 +3424,7 @@ class OutOfLineCallPostWriteBarrier : public OutOfLineCodeBase<CodeGenerator>
     }
 };
 
+#ifndef OMR // Writebarrier
 static void
 EmitStoreBufferCheckForConstant(MacroAssembler& masm, JSObject* object,
                                 AllocatableGeneralRegisterSet& regs, Label* exit, Label* callVM)
@@ -3454,11 +3456,15 @@ EmitStoreBufferCheckForConstant(MacroAssembler& masm, JSObject* object,
 
     regs.add(temp);
 }
+#endif // ! OMR Writebarriers
 
 static void
 EmitPostWriteBarrier(MacroAssembler& masm, Register objreg, JSObject* maybeConstant, bool isGlobal,
                      AllocatableGeneralRegisterSet& regs)
 {
+#ifndef OMR // Writebarrier
+    // OMRTODO: JIT writebarrier
+
     MOZ_ASSERT_IF(isGlobal, maybeConstant);
 
     Label callVM;
@@ -3482,11 +3488,14 @@ EmitPostWriteBarrier(MacroAssembler& masm, Register objreg, JSObject* maybeConst
     masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, fun));
 
     masm.bind(&exit);
+
+#endif // ! OMR Writebarrier
 }
 
 void
 CodeGenerator::emitPostWriteBarrier(const LAllocation* obj)
 {
+#ifndef OMR // Writebarrier
     AllocatableGeneralRegisterSet regs(GeneralRegisterSet::Volatile());
 
     Register objreg;
@@ -3503,23 +3512,28 @@ CodeGenerator::emitPostWriteBarrier(const LAllocation* obj)
     }
 
     EmitPostWriteBarrier(masm, objreg, object, isGlobal, regs);
+#endif // ! OMR Writebarrier
 }
 
 void
 CodeGenerator::emitPostWriteBarrier(Register objreg)
 {
+#ifndef OMR // Writebarrier
     AllocatableGeneralRegisterSet regs(GeneralRegisterSet::Volatile());
     regs.takeUnchecked(objreg);
     EmitPostWriteBarrier(masm, objreg, nullptr, false, regs);
+#endif // ! OMR Writebarrier
 }
 
 void
 CodeGenerator::visitOutOfLineCallPostWriteBarrier(OutOfLineCallPostWriteBarrier* ool)
 {
+#ifndef OMR // Writebarrier
     saveLiveVolatile(ool->lir());
     const LAllocation* obj = ool->object();
     emitPostWriteBarrier(obj);
     restoreLiveVolatile(ool->lir());
+#endif // ! OMR Writebarrier
 
     masm.jump(ool->rejoin());
 }
@@ -3530,6 +3544,7 @@ CodeGenerator::maybeEmitGlobalBarrierCheck(const LAllocation* maybeGlobal, OutOf
     // Check whether an object is a global that we have already barriered before
     // calling into the VM.
 
+    // OMRNOTE: This logic is probably OK.
     if (!maybeGlobal->isConstant())
         return;
 
@@ -9635,7 +9650,10 @@ CodeGenerator::link(JSContext* cx, CompilerConstraintList* constraints)
         for (size_t i = 0; i < graph.numConstants(); i++) {
             const Value& v = vp[i];
             if (v.isObject() && IsInsideNursery(&v.toObject())) {
+#ifndef OMR // Writebarriers
+                // OMRTODO: Write barrier here
                 cx->runtime()->gc.storeBuffer.putWholeCell(script);
+#endif // ! OMR Writebarriers
                 break;
             }
         }

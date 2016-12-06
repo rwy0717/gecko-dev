@@ -124,7 +124,9 @@ typedef void
 namespace js {
 namespace gc {
 class AutoTraceSession;
+#ifndef OMR
 class StoreBuffer;
+#endif // ! OMR
 } // namespace gc
 } // namespace js
 
@@ -153,12 +155,15 @@ struct Runtime
     friend class JS::AutoEnterCycleCollection;
     JS::HeapState heapState_;
 
+#ifndef OMR // Writebarriers
     js::gc::StoreBuffer* gcStoreBufferPtr_;
-
+#endif // ! OMR Writebarriers
   public:
     Runtime()
       : heapState_(JS::HeapState::Idle)
+#ifndef OMR // Writebarriers
       , gcStoreBufferPtr_(nullptr)
+#endif // ! OMR Writebarriers
     {}
 
     bool isHeapBusy() const { return heapState_ != JS::HeapState::Idle; }
@@ -169,16 +174,20 @@ struct Runtime
         return heapState_ == JS::HeapState::CycleCollecting;
     }
 
+#ifndef OMR // Writebarriers
     js::gc::StoreBuffer* gcStoreBufferPtr() { return gcStoreBufferPtr_; }
+#endif // ! OMR Writebarriers
 
     static JS::shadow::Runtime* asShadowRuntime(JSRuntime* rt) {
         return reinterpret_cast<JS::shadow::Runtime*>(rt);
     }
 
   protected:
+#ifndef OMR // Writebarriers
     void setGCStoreBufferPtr(js::gc::StoreBuffer* storeBuffer) {
         gcStoreBufferPtr_ = storeBuffer;
     }
+#endif // ! OMR Writebarriers
 };
 
 } /* namespace shadow */

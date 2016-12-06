@@ -41,6 +41,8 @@ GCRuntime::poke()
 {
 }
 
+#ifndef OMR // Arenas
+
 class ArenaIter
 {
   public:
@@ -110,6 +112,8 @@ class ArenaCellIterUnderFinalize : public ArenaCellIterImpl
   public:
     explicit ArenaCellIterUnderFinalize(Arena* arena) {}
 };
+
+#endif // ! OMR Arenas
 
 template <typename T>
 class ZoneCellIter;

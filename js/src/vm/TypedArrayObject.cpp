@@ -505,7 +505,10 @@ class TypedArrayObjectTemplate : public TypedArrayObject
                     //MOZ_ASSERT(buffer->byteLength() == 0 &&
                     //           (uintptr_t(ptr.unwrapValue()) & gc::ChunkMask) == 0);
                 } else {
+#ifndef OMR // Writebarrier
+                    // OMRTODO: Writebarrier here
                     cx->runtime()->gc.storeBuffer.putWholeCell(obj);
+#endif // ! OMR Writebarrier
                 }
             }
         } else {
@@ -1583,8 +1586,11 @@ DataViewObject::create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
 
     // Include a barrier if the data view's data pointer is in the nursery, as
     // is done for typed arrays.
+#ifndef OMR // Writebarrier
+    // OMRTODO: Writebarrier here
     if (!IsInsideNursery(obj) && cx->runtime()->gc.nursery.isInside(arrayBuffer->dataPointer()))
         cx->runtime()->gc.storeBuffer.putWholeCell(obj);
+#endif // ! OMR Writebarrier
 
     // Verify that the private slot is at the expected place
     MOZ_ASSERT(dvobj.numFixedSlots() == TypedArrayObject::DATA_SLOT);

@@ -1099,6 +1099,7 @@ DumpHeapVisitCompartment(JSContext* cx, void* data, JSCompartment* comp)
     fprintf(dtrc->output, "# compartment %s [in zone %p]\n", name, (void*)comp->zone());
 }
 
+#ifndef OMR // Arena
 static void
 DumpHeapVisitArena(JSRuntime* rt, void* data, gc::Arena* arena,
                    JS::TraceKind traceKind, size_t thingSize)
@@ -1107,6 +1108,7 @@ DumpHeapVisitArena(JSRuntime* rt, void* data, gc::Arena* arena,
     fprintf(dtrc->output, "# arena allockind=%u size=%u\n",
             unsigned(arena->getAllocKind()), unsigned(thingSize));
 }
+#endif // ! OMR Arena
 
 static void
 DumpHeapVisitCell(JSRuntime* rt, void* data, void* thing,
@@ -1133,6 +1135,8 @@ DumpHeapTracer::onChild(const JS::GCCellPtr& thing)
 void
 js::DumpHeap(JSContext* cx, FILE* fp, js::DumpHeapNurseryBehaviour nurseryBehaviour)
 {
+#ifndef OMR
+    // OMRTODO: Dump Heap
     if (nurseryBehaviour == js::CollectNurseryBeforeDump)
         cx->gc.evictNursery(JS::gcreason::API);
 
@@ -1151,8 +1155,8 @@ js::DumpHeap(JSContext* cx, FILE* fp, js::DumpHeapNurseryBehaviour nurseryBehavi
                                         DumpHeapVisitCompartment,
                                         DumpHeapVisitArena,
                                         DumpHeapVisitCell);
-
     fflush(dtrc.output);
+#endif // OMR
 }
 
 JS_FRIEND_API(void)

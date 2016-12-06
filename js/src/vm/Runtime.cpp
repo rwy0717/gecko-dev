@@ -248,7 +248,9 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
     stackFormat_(parentRuntime ? js::StackFormat::Default
                                : js::StackFormat::SpiderMonkey)
 {
+#ifndef OMR // Writebarrier
     setGCStoreBufferPtr(&gc.storeBuffer);
+#endif // Writebarrier
 
     liveRuntimesCount++;
 
@@ -433,7 +435,10 @@ JSRuntime::destroyRuntime()
 
     js_delete(ionPcScriptCache);
 
+#ifndef OMR // Writebarrier
     gc.storeBuffer.disable();
+#endif // ! OMR Writebarrier
+
     gc.nursery.disable();
 
 #ifdef JS_SIMULATOR
@@ -514,7 +519,10 @@ JSRuntime::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::Runtim
     rtSizes->gc.marker += gc.marker.sizeOfExcludingThis(mallocSizeOf);
     rtSizes->gc.nurseryCommitted += gc.nursery.sizeOfHeapCommitted();
     rtSizes->gc.nurseryMallocedBuffers += gc.nursery.sizeOfMallocedBuffers(mallocSizeOf);
+
+#ifndef OMR
     gc.storeBuffer.addSizeOfExcludingThis(mallocSizeOf, &rtSizes->gc);
+#endif
 }
 
 static bool

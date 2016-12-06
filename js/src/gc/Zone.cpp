@@ -24,7 +24,9 @@ using namespace js::gc;
 JS::Zone::Zone(JSRuntime* rt)
   : JS::shadow::Zone(rt, nullptr),
     suppressAllocationMetadataBuilder(false),
+#ifndef OMR
     arenas(rt),
+#endif
     types(this),
     compartments(),
     gcGrayRoots(),

@@ -674,11 +674,14 @@ class TypeSetRef : public BufferableRef
 void
 ConstraintTypeSet::postWriteBarrier(ExclusiveContext* cx, Type type)
 {
+#ifndef OMR // Writebarrier
+    // OMRTODO: Writebarrier here
     if (type.isSingletonUnchecked() && IsInsideNursery(type.singletonNoBarrier())) {
         JSRuntime* rt = cx->asJSContext()->runtime();
         rt->gc.storeBuffer.putGeneric(TypeSetRef(cx->zone(), this));
         rt->gc.storeBuffer.setShouldCancelIonCompilations();
     }
+#endif // ! OMR Writebarrier
 }
 
 void
@@ -808,6 +811,10 @@ TypeSet::IsTypeMarked(TypeSet::Type* v)
 /* static */ bool
 TypeSet::IsTypeAllocatedDuringIncremental(TypeSet::Type v)
 {
+    // OMRTODO: Incremental allocations and typesets... what's going on here
+#ifdef OMR // Incremental GC
+    return true;
+#else // OMR Incremental GC
     bool rv;
     if (v.isSingletonUnchecked()) {
         JSObject* obj = v.singletonNoBarrier();
@@ -819,6 +826,7 @@ TypeSet::IsTypeAllocatedDuringIncremental(TypeSet::Type v)
         rv = false;
     }
     return rv;
+#endif // ! OMR Incremental GC
 }
 
 static inline bool
@@ -4542,7 +4550,11 @@ TypeScript::printTypes(JSContext* cx, HandleScript script) const
 JS::ubi::Node::Size
 JS::ubi::Concrete<js::ObjectGroup>::size(mozilla::MallocSizeOf mallocSizeOf) const
 {
+#ifdef OMR
+    Size size = js::gc::OmrGcHelper::thingSize(get().getAllocKind());
+#else
     Size size = js::gc::Arena::thingSize(get().asTenured().getAllocKind());
+#endif
     size += get().sizeOfExcludingThis(mallocSizeOf);
     return size;
 }

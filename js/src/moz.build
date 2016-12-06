@@ -660,7 +660,8 @@ USE_LIBS += [
 ]
 
 OS_LIBS += [
-    'dl /tmp/libomrstatic.a'
+    'dl $(topsrcdir)/js/src/omr/lib/libomrstatic.a',
+    'iconv'
 ]
 
 if CONFIG['NIGHTLY_BUILD']:

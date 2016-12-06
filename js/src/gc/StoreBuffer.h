@@ -21,7 +21,7 @@
 namespace js {
 namespace gc {
 
-class ArenaCellSet;
+// class ArenaCellSet;
 
 /*
  * BufferableRef represents an abstract reference for use in the generational
@@ -35,6 +35,8 @@ class BufferableRef
     virtual void trace(JSTracer* trc) = 0;
     bool maybeInRememberedSet(const Nursery&) const { return true; }
 };
+
+#ifndef OMR // Disable write barriers
 
 typedef HashSet<void*, PointerHasher<void*, 3>, SystemAllocPolicy> EdgeSet;
 
@@ -144,6 +146,8 @@ class ArenaCellSet
 };
 
 inline ArenaCellSet* AllocateWholeCellSet(Arena* arena) { return nullptr; }
+
+#endif // ! OMR
 
 } /* namespace gc */
 } /* namespace js */

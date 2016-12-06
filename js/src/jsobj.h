@@ -308,6 +308,7 @@ class JSObject : public js::gc::Cell
     static const size_t MaxTagBits = 3;
     static bool isNullLike(const JSObject* obj) { return uintptr_t(obj) < (1 << MaxTagBits); }
 
+#ifndef OMR // Zones
     MOZ_ALWAYS_INLINE JS::Zone* zone() const {
         return group_->zone();
     }
@@ -320,6 +321,8 @@ class JSObject : public js::gc::Cell
     MOZ_ALWAYS_INLINE JS::shadow::Zone* shadowZoneFromAnyThread() const {
         return JS::shadow::Zone::asShadowZone(zoneFromAnyThread());
     }
+#endif // ! OMR Zones
+
     static MOZ_ALWAYS_INLINE void readBarrier(JSObject* obj);
     static MOZ_ALWAYS_INLINE void writeBarrierPre(JSObject* obj);
     static MOZ_ALWAYS_INLINE void writeBarrierPost(void* cellp, JSObject* prev, JSObject* next);
@@ -328,8 +331,13 @@ class JSObject : public js::gc::Cell
     js::gc::AllocKind allocKindForTenure(const js::Nursery& nursery) const;
 
     size_t tenuredSizeOfThis() const {
+#ifdef OMR // Arenas
+        // OMRTODO: Obtain size correctly
+        return js::gc::OmrGcHelper::thingSize(getAllocKind());
+#else // OMR Arenas
         MOZ_ASSERT(isTenured());
         return js::gc::Arena::thingSize(asTenured().getAllocKind());
+#endif // ! OMR Arenas
     }
 
     void addSizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::ClassInfo* info);
@@ -638,22 +646,27 @@ struct JSObject_Slots16 : JSObject { void* data[3]; js::Value fslots[16]; };
 /* static */ MOZ_ALWAYS_INLINE void
 JSObject::readBarrier(JSObject* obj)
 {
+#ifndef OMR
     MOZ_ASSERT_IF(obj, !isNullLike(obj));
     if (obj && obj->isTenured())
         obj->asTenured().readBarrier(&obj->asTenured());
+#endif // !OMR
 }
 
 /* static */ MOZ_ALWAYS_INLINE void
 JSObject::writeBarrierPre(JSObject* obj)
 {
+#ifndef OMR
     MOZ_ASSERT_IF(obj, !isNullLike(obj));
     if (obj && obj->isTenured())
         obj->asTenured().writeBarrierPre(&obj->asTenured());
+#endif // OMR
 }
 
 /* static */ MOZ_ALWAYS_INLINE void
 JSObject::writeBarrierPost(void* cellp, JSObject* prev, JSObject* next)
 {
+#ifndef OMR
     MOZ_ASSERT(cellp);
     MOZ_ASSERT_IF(next, !IsNullTaggedPointer(next));
     MOZ_ASSERT_IF(prev, !IsNullTaggedPointer(prev));
@@ -674,6 +687,7 @@ JSObject::writeBarrierPost(void* cellp, JSObject* prev, JSObject* next)
     // Remove the prev entry if the new value does not need it.
     if (prev && (buffer = prev->storeBuffer()))
         buffer->unputCell(static_cast<js::gc::Cell**>(cellp));
+#endif // OMR
 }
 
 namespace js {

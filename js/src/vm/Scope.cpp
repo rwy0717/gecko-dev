@@ -1413,6 +1413,12 @@ js::FrameSlotName(JSScript* script, jsbytecode* pc)
 JS::ubi::Node::Size
 JS::ubi::Concrete<Scope>::size(mozilla::MallocSizeOf mallocSizeOf) const
 {
+#ifdef OMR
+    // OMRTODO: What is sizeOfExcludingThis
+    return js::gc::OmrGcHelper::thingSize(get().getAllocKind()) +
+           get().sizeOfExcludingThis(mallocSizeOf);
+#else
     return js::gc::Arena::thingSize(get().asTenured().getAllocKind()) +
            get().sizeOfExcludingThis(mallocSizeOf);
+#endif
 }

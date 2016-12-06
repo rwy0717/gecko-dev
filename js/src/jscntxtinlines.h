@@ -84,9 +84,17 @@ class CompartmentChecker
     }
 
     void check(JSString* str) {
-        //MOZ_ASSERT(!str->isMarked(gc::GRAY));
+#ifdef OMR
+        MOZ_ASSERT(!str->isMarked(gc::GRAY));
+        // OMRTODO: Obtain zone from context
+        // OMRTODO: What is checkZone, anyways?
+        if (!str->isAtom()) {
+            checkZone(gc::OmrGcHelper::zone);
+        }
+#else // OMR
         if (!str->isAtom())
             checkZone(str->zone());
+#endif // ! OMR
     }
 
     void check(const js::Value& v) {
@@ -445,7 +453,9 @@ js::ExclusiveContext::setCompartment(JSCompartment* comp,
 
     compartment_ = comp;
     zone_ = comp ? comp->zone() : nullptr;
+#ifndef OMR // Arenas
     arenas_ = zone_ ? &zone_->arenas : nullptr;
+#endif // ! OMR Arenas
 }
 
 inline JSScript*
