@@ -45,7 +45,7 @@ ReallocateObjectBuffer(ExclusiveContext* cx, JSObject* obj, T* oldBuffer,
                        uint32_t oldCount, uint32_t newCount)
 {
 	T *newBuffer = (T *)js_malloc(sizeof(T) * newCount);
-	memcpy(oldBuffer, newBuffer, sizeof(T) * oldCount);
+	memcpy(newBuffer, oldBuffer, sizeof(T) * oldCount);
 	free(oldBuffer);
     return newBuffer;
 }
