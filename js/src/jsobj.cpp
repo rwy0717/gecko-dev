@@ -3666,11 +3666,12 @@ js::DumpBacktrace(JSContext* cx)
     DumpBacktrace(cx, stdout);
 }
 
-/* * */
-
 js::gc::AllocKind
 JSObject::allocKindForTenure(const js::Nursery& nursery) const
 {
+    return getAllocKind();
+
+#if 0 // OMR
     if (is<ArrayObject>()) {
         const ArrayObject& aobj = as<ArrayObject>();
         MOZ_ASSERT(aobj.numFixedSlots() == 0);
@@ -3740,6 +3741,7 @@ JSObject::allocKindForTenure(const js::Nursery& nursery) const
     if (!CanBeFinalizedInBackground(kind, getClass()))
         return kind;
     return GetBackgroundAllocKind(kind);
+#endif // allocKind
 }
 
 

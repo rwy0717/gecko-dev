@@ -24,7 +24,7 @@ using namespace gc;
 
 // OMRTODO: Allocate space for slots!!
 
-template <typename T, AllowGC allowGC = CanGC>
+template <typename T, AllowGC allowGC /* = CanGC */>
 T*
 js::Allocate(ExclusiveContext* cx) {
 	JSContext* ncx = cx->asJSContext();
@@ -38,7 +38,7 @@ template JSObject* js::Allocate<JSObject, CanGC>(ExclusiveContext* cx, gc::Alloc
                                                  size_t nDynamicSlots, gc::InitialHeap heap,
                                                  const Class* clasp);
 
-template <typename T, AllowGC allowGC = CanGC>
+template <typename T, AllowGC allowGC /* = CanGC */>
 JSObject*
 js::Allocate(ExclusiveContext* cx, gc::AllocKind kind, size_t nDynamicSlots, gc::InitialHeap heap,
          const Class* clasp) {

@@ -151,7 +151,7 @@ class NativeIterCache
 class NewObjectCache
 {
     /* Statically asserted to be equal to sizeof(JSObject_Slots16) */
-    static const unsigned MAX_OBJ_SIZE = 4 * sizeof(void*) + 16 * sizeof(Value);
+    static const unsigned MAX_OBJ_SIZE = 5 * sizeof(void*) + 16 * sizeof(Value);
 
     static void staticAsserts() {
         JS_STATIC_ASSERT(NewObjectCache::MAX_OBJ_SIZE == sizeof(JSObject_Slots16));

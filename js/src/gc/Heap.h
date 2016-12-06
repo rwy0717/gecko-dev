@@ -65,7 +65,7 @@ enum InitialHeap {
 /* The GC allocation kinds. */
 // FIXME: uint8_t would make more sense for the underlying type, but causes
 // miscompilations in GCC (fixed in 4.8.5 and 4.9.3). See also bug 1143966.
-enum class AllocKind {
+enum class AllocKind : uintptr_t {
     FIRST,
     OBJECT_FIRST = FIRST,
     FUNCTION = FIRST,
@@ -162,6 +162,7 @@ struct Cell
 {
   public:
 	static Arena* arena;
+  typedef uintptr_t Flags;
 
   public:
     MOZ_ALWAYS_INLINE bool isTenured() const { return !IsInsideNursery(this); }
@@ -183,6 +184,10 @@ struct Cell
 
     inline JS::TraceKind getTraceKind() const;
 
+    inline AllocKind getAllocKind() const { return (AllocKind)flags_; }
+
+    inline void allocKind(AllocKind allocKind) { flags_ = (Flags)allocKind; }
+
     static MOZ_ALWAYS_INLINE bool needWriteBarrierPre(JS::Zone* zone);
 
 #ifdef DEBUG
@@ -194,6 +199,9 @@ struct Cell
   protected:
     inline uintptr_t address() const;
     inline Chunk* chunk() const;
+
+    Flags flags_;
+
 } JS_HAZ_GC_THING;
 
 // A GC TenuredCell gets behaviors that are valid for things in the Tenured
@@ -218,7 +226,6 @@ class TenuredCell : public Cell
 
     // Access to the arena.
     inline Arena* arena() const;
-    inline AllocKind getAllocKind() const;
     inline JS::TraceKind getTraceKind() const;
     inline JS::Zone* zone() const;
     inline JS::Zone* zoneFromAnyThread() const;
@@ -573,12 +580,6 @@ inline Arena*
 TenuredCell::arena() const
 {
     return Cell::arena;
-}
-
-AllocKind
-TenuredCell::getAllocKind() const
-{
-    return (AllocKind)0;
 }
 
 JS::TraceKind

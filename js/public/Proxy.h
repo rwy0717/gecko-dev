@@ -397,7 +397,7 @@ struct ProxyDataLayout
     const BaseProxyHandler* handler;
 };
 
-const uint32_t ProxyDataOffset = 2 * sizeof(void*);
+const uint32_t ProxyDataOffset = 3 * sizeof(void*);
 
 inline ProxyDataLayout*
 GetProxyDataLayout(JSObject* obj)

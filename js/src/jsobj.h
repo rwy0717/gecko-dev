@@ -584,7 +584,7 @@ class JSObject : public js::gc::Cell
     static size_t offsetOfGroup() { return offsetof(JSObject, group_); }
 
     // Maximum size in bytes of a JSObject.
-    static const size_t MAX_BYTE_SIZE = 4 * sizeof(void*) + 16 * sizeof(JS::Value);
+    static const size_t MAX_BYTE_SIZE = 5 * sizeof(void*) + 16 * sizeof(JS::Value);
 
   private:
     JSObject() = delete;

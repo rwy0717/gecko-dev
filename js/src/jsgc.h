@@ -494,7 +494,7 @@ Forwarded(T* t)
 
 struct ForwardedFunctor : public IdentityDefaultAdaptor<Value> {
     template <typename T> inline Value operator()(T* t) {
-        return 0;
+        return Value();
     }
 };
 
