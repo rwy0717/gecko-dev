@@ -21,11 +21,11 @@ struct Class;
 // Note that JSObject allocation must use the longer signature below that
 // includes slot, heap, and finalizer information in support of various
 // object-specific optimizations.
-template <typename, AllowGC allowGC = CanGC>
+template <typename T, AllowGC allowGC = CanGC>
 T*
 Allocate(ExclusiveContext* cx);
 
-template <typename, AllowGC allowGC = CanGC>
+template <typename T, AllowGC allowGC = CanGC>
 JSObject*
 Allocate(ExclusiveContext* cx, gc::AllocKind kind, size_t nDynamicSlots, gc::InitialHeap heap,
          const Class* clasp);

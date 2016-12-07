@@ -161,7 +161,7 @@ class TenuredCell;
 struct Cell
 {
   public:
-    using uintptr_t = Flags;
+    using Flags = uintptr_t;
 
   public:
     MOZ_ALWAYS_INLINE bool isTenured() const { return !IsInsideNursery(this); }
@@ -579,7 +579,7 @@ TenuredCell::copyMarkBitsFrom(const TenuredCell* src)
 inline Arena*
 TenuredCell::arena() const
 {
-    return Cell::arena;
+    return NULL;
 }
 
 JS::TraceKind
