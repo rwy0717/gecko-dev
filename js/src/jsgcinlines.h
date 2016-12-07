@@ -28,7 +28,12 @@ MakeAccessibleAfterMovingGC(JSObject* obj) {
 static inline AllocKind
 GetGCObjectKind(const Class* clasp)
 {
-    return AllocKind::FUNCTION;
+     if (clasp == FunctionClassPtr)
+         return AllocKind::FUNCTION;
+     uint32_t nslots = JSCLASS_RESERVED_SLOTS(clasp);
+     if (clasp->flags & JSCLASS_HAS_PRIVATE)
+         nslots++;
+     return GetGCObjectKind(nslots);
 }
 
 inline void

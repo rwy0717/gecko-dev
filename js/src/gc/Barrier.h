@@ -229,6 +229,18 @@ namespace jit {
 class JitCode;
 } // namespace jit
 
+#ifdef DEBUG
+// Barriers can't be triggered during backend Ion compilation, which may run on
+// a helper thread.
+static bool
+CurrentThreadIsIonCompiling() { return false; }
+
+static bool
+CurrentThreadIsIonCompilingSafeForMinorGC() { return false; }
+
+static bool
+CurrentThreadIsGCSweeping() { return false; }
+#endif
 
 namespace gc {
 

@@ -1943,7 +1943,7 @@ js::TryConvertToUnboxedLayout(ExclusiveContext* cx, AutoEnterAnalysis& enter, Sh
 
     MOZ_ASSERT_IF(templateShape, !templateShape->getObjectFlags());
 
-    if (group->runtimeFromAnyThread()->isSelfHostingGlobal(cx->global()))
+    if (cx->zone()->runtimeFromAnyThread()->isSelfHostingGlobal(cx->global()))
         return true;
 
     if (!isArray && templateShape->slotSpan() == 0)

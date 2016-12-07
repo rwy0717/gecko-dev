@@ -1195,7 +1195,7 @@ AssertValidStringPtr(JSContext* cx, JSString* str)
 {
 #ifdef DEBUG
     // We can't closely inspect strings from another runtime.
-    if (str->runtimeFromAnyThread() != cx->runtime()) {
+    /*if (str->runtimeFromAnyThread() != cx->runtime()) {
         MOZ_ASSERT(str->isPermanentAtom());
         return;
     }
@@ -1206,7 +1206,7 @@ AssertValidStringPtr(JSContext* cx, JSString* str)
         MOZ_ASSERT(str->zone() == cx->zone());
 
     MOZ_ASSERT(str->isAligned());
-    MOZ_ASSERT(str->length() <= JSString::MAX_LENGTH);
+    MOZ_ASSERT(str->length() <= JSString::MAX_LENGTH);*/
 
     gc::AllocKind kind = str->getAllocKind();
     if (str->isFatInline())
@@ -1224,13 +1224,13 @@ void
 AssertValidSymbolPtr(JSContext* cx, JS::Symbol* sym)
 {
     // We can't closely inspect symbols from another runtime.
-    if (sym->runtimeFromAnyThread() != cx->runtime()) {
+    /*if (sym->runtimeFromAnyThread() != cx->runtime()) {
         MOZ_ASSERT(sym->isWellKnownSymbol());
         return;
     }
 
     MOZ_ASSERT(sym->zone()->isAtomsZone());
-    MOZ_ASSERT(sym->isAligned());
+    MOZ_ASSERT(sym->isAligned());*/
     if (JSString* desc = sym->description()) {
         MOZ_ASSERT(desc->isAtom());
         AssertValidStringPtr(cx, desc);

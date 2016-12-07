@@ -44,7 +44,9 @@ js::Allocate(ExclusiveContext* cx, gc::AllocKind kind, size_t nDynamicSlots, gc:
          const Class* clasp) {
 	JSContext* ncx = cx->asJSContext();
 	JSRuntime* rt = ncx->runtime();
-	return rt->gc.nursery.allocateObject(ncx, Arena::thingSize(kind), nDynamicSlots, clasp);
+	JSObject* obj = rt->gc.nursery.allocateObject(ncx, Arena::thingSize(kind), nDynamicSlots, clasp);
+	obj->flags_ = (int)kind;
+	return obj;
 }
 
 #define DECL_ALLOCATOR_INSTANCES(allocKind, traceKind, type, sizedType) \

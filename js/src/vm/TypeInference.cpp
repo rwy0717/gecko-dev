@@ -3467,14 +3467,14 @@ PreliminaryObjectArrayWithTemplate::trace(JSTracer* trc)
 /* static */ void
 PreliminaryObjectArrayWithTemplate::writeBarrierPre(PreliminaryObjectArrayWithTemplate* objects)
 {
-    Shape* shape = objects->shape();
+    /*Shape* shape = objects->shape();
 
     if (!shape || shape->runtimeFromAnyThread()->isHeapCollecting())
         return;
 
     JS::Zone* zone = shape->zoneFromAnyThread();
     if (zone->needsIncrementalBarrier())
-        objects->trace(zone->barrierTracer());
+        objects->trace(zone->barrierTracer());*/
 }
 
 // Return whether shape consists entirely of plain data properties.
@@ -4027,12 +4027,12 @@ TypeNewScript::trace(JSTracer* trc)
 /* static */ void
 TypeNewScript::writeBarrierPre(TypeNewScript* newScript)
 {
-    if (newScript->function()->runtimeFromAnyThread()->isHeapCollecting())
+    /*if (newScript->function()->runtimeFromAnyThread()->isHeapCollecting())
         return;
 
     JS::Zone* zone = newScript->function()->zoneFromAnyThread();
     if (zone->needsIncrementalBarrier())
-        newScript->trace(zone->barrierTracer());
+        newScript->trace(zone->barrierTracer());*/
 }
 
 void

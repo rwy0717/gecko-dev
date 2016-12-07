@@ -75,13 +75,51 @@ IsNurseryAllocable(AllocKind kind)
 static inline bool
 IsBackgroundFinalized(AllocKind kind)
 {
-    return false;
+    static const bool map[] = {
+        true,      /* AllocKind::FUNCTION */
+        true,      /* AllocKind::FUNCTION_EXTENDED */
+        false,     /* AllocKind::OBJECT0 */
+        true,      /* AllocKind::OBJECT0_BACKGROUND */
+        false,     /* AllocKind::OBJECT2 */
+        true,      /* AllocKind::OBJECT2_BACKGROUND */
+        false,     /* AllocKind::OBJECT4 */
+        true,      /* AllocKind::OBJECT4_BACKGROUND */
+        false,     /* AllocKind::OBJECT8 */
+        true,      /* AllocKind::OBJECT8_BACKGROUND */
+        false,     /* AllocKind::OBJECT12 */
+        true,      /* AllocKind::OBJECT12_BACKGROUND */
+        false,     /* AllocKind::OBJECT16 */
+        true,      /* AllocKind::OBJECT16_BACKGROUND */
+        false,     /* AllocKind::SCRIPT */
+        true,      /* AllocKind::LAZY_SCRIPT */
+        true,      /* AllocKind::SHAPE */
+        true,      /* AllocKind::ACCESSOR_SHAPE */
+        true,      /* AllocKind::BASE_SHAPE */
+        true,      /* AllocKind::OBJECT_GROUP */
+        true,      /* AllocKind::FAT_INLINE_STRING */
+        true,      /* AllocKind::STRING */
+        false,     /* AllocKind::EXTERNAL_STRING */
+        true,      /* AllocKind::SYMBOL */
+        false,     /* AllocKind::JITCODE */
+        true,      /* AllocKind::SCOPE */
+    };
+    JS_STATIC_ASSERT(JS_ARRAY_LENGTH(map) == size_t(AllocKind::LIMIT));
+    return map[size_t(kind)];
 }
 
 static inline bool
 CanBeFinalizedInBackground(AllocKind kind, const Class* clasp)
 {
-    return false;
+    MOZ_ASSERT(IsObjectAllocKind(kind));
+    /* If the class has no finalizer or a finalizer that is safe to call on
+     * a different thread, we change the alloc kind. For example,
+     * AllocKind::OBJECT0 calls the finalizer on the main thread,
+     * AllocKind::OBJECT0_BACKGROUND calls the finalizer on the gcHelperThread.
+     * IsBackgroundFinalized is called to prevent recursively incrementing
+     * the alloc kind; kind may already be a background finalize kind.
+     */
+    return (!IsBackgroundFinalized(kind) &&
+            (!clasp->hasFinalize() || (clasp->flags & JSCLASS_BACKGROUND_FINALIZE)));
 }
 
 /* Capacity for slotsToThingKind */

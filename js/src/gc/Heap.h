@@ -200,6 +200,7 @@ struct Cell
     inline uintptr_t address() const;
     inline Chunk* chunk() const;
 
+  public:
     Flags flags_;
 
 } JS_HAZ_GC_THING;
