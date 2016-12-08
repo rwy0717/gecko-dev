@@ -1064,17 +1064,11 @@ js::NewCompartment(JSContext* cx, Zone* zone, JSPrincipals* principals,
 	if (!zone) {
 		JSRuntime* rt = cx->runtime();
 		zone = cx->new_<Zone>(rt);
-
-		Cell::arena = new Arena();
-		Cell::arena->init(zone, AllocKind::OBJECT0);
 	}
 	ScopedJSDeletePtr<JSCompartment> compartment(cx->new_<JSCompartment>(zone, options));
 	compartment->init(cx);
 	return compartment.forget();
 }
-
-
-Arena* js::gc::Cell::arena = nullptr;
 
 void
 gc::MergeCompartments(JSCompartment* source, JSCompartment* target)

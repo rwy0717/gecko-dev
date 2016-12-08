@@ -112,8 +112,8 @@ MM_EnvironmentLanguageInterfaceImpl::parallelMarkTask_cleanup(MM_EnvironmentBase
 {
 }
 
-void acquireVMAccess() {}
-void releaseVMAccess(){}
-uintptr_t relinquishExclusiveVMAccess(){ return 0; }
-void assumeExclusiveVMAccess(uintptr_t exclusiveCount){}
-bool isExclusiveAccessRequestWaiting(){ return false; }
+void MM_EnvironmentLanguageInterfaceImpl::acquireVMAccess() {}
+void MM_EnvironmentLanguageInterfaceImpl::releaseVMAccess() {}
+uintptr_t MM_EnvironmentLanguageInterfaceImpl::relinquishExclusiveVMAccess() { return 0; }
+void MM_EnvironmentLanguageInterfaceImpl::assumeExclusiveVMAccess(uintptr_t exclusiveCount) {}
+bool MM_EnvironmentLanguageInterfaceImpl::isExclusiveAccessRequestWaiting() { return false; }

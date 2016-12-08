@@ -3669,7 +3669,7 @@ js::DumpBacktrace(JSContext* cx)
 js::gc::AllocKind
 JSObject::allocKindForTenure(const js::Nursery& nursery) const
 {
-    return allocKind;
+    return getAllocKind();
 
     // OMRTODO: Check that alloc kind matches the store one
 
@@ -3743,7 +3743,6 @@ JSObject::allocKindForTenure(const js::Nursery& nursery) const
     if (!CanBeFinalizedInBackground(kind, getClass()))
         return kind;
     return GetBackgroundAllocKind(kind);
-#endif // allocKind
 #endif // !OMR
 }
 

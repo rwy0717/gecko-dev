@@ -185,7 +185,7 @@ struct Cell
 
     inline AllocKind getAllocKind() const { return (AllocKind)flags_; }
 
-    inline void allocKind(AllocKind allocKind) { flags_ = (Flags)allocKind; }
+    inline void setAllocKind(AllocKind allocKind) { flags_ = (Flags)allocKind; }
 
     static MOZ_ALWAYS_INLINE bool needWriteBarrierPre(JS::Zone* zone);
 
