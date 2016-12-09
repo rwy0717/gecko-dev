@@ -495,8 +495,8 @@ NewSingletonCallObject(JSContext* cx, HandleShape shape)
     // The JIT creates call objects in the nursery, so elides barriers for
     // the initializing writes. The interpreter, however, may have allocated
     // the call object tenured, so barrier as needed before re-entering.
-    MOZ_ASSERT(!IsInsideNursery(obj),
-               "singletons are created in the tenured heap");
+    //MOZ_ASSERT(!IsInsideNursery(obj),
+    //           "singletons are created in the tenured heap");
     cx->runtime()->gc.storeBuffer.putWholeCell(obj);
 
     return obj;
@@ -601,7 +601,7 @@ GetDynamicName(JSContext* cx, JSObject* envChain, JSString* str, Value* vp)
 void
 PostWriteBarrier(JSRuntime* rt, JSObject* obj)
 {
-    MOZ_ASSERT(!IsInsideNursery(obj));
+    //MOZ_ASSERT(!IsInsideNursery(obj));
     rt->gc.storeBuffer.putWholeCell(obj);
 }
 
@@ -610,7 +610,7 @@ static const size_t MAX_WHOLE_CELL_BUFFER_SIZE = 4096;
 void
 PostWriteElementBarrier(JSRuntime* rt, JSObject* obj, int32_t index)
 {
-    MOZ_ASSERT(!IsInsideNursery(obj));
+    //MOZ_ASSERT(!IsInsideNursery(obj));
     if (obj->is<NativeObject>() &&
         !obj->as<NativeObject>().isInWholeCellBuffer() &&
         uint32_t(index) < obj->as<NativeObject>().getDenseInitializedLength() &&
@@ -1174,12 +1174,12 @@ AssertValidObjectPtr(JSContext* cx, JSObject* obj)
     MOZ_ASSERT_IF(!obj->hasLazyGroup() && obj->maybeShape(),
                   obj->group()->clasp() == obj->maybeShape()->getObjectClass());
 
-    if (obj->isTenured()) {
+    /*if (obj->isTenured()) {
         MOZ_ASSERT(obj->isAligned());
         gc::AllocKind kind = obj->asTenured().getAllocKind();
         MOZ_ASSERT(gc::IsObjectAllocKind(kind));
         MOZ_ASSERT(obj->asTenured().zone() == cx->zone());
-    }
+    }*/
 #endif
 }
 

@@ -302,7 +302,7 @@ CopyInitializerObject(JSContext* cx, HandlePlainObject baseobj, NewObjectKind ne
 
     gc::AllocKind allocKind = gc::GetGCObjectFixedSlotsKind(baseobj->numFixedSlots());
     allocKind = gc::GetBackgroundAllocKind(allocKind);
-    MOZ_ASSERT_IF(baseobj->isTenured(), allocKind == baseobj->asTenured().getAllocKind());
+    //MOZ_ASSERT_IF(baseobj->isTenured(), allocKind == baseobj->asTenured().getAllocKind());
     RootedPlainObject obj(cx, NewBuiltinClassInstance<PlainObject>(cx, allocKind, newKind));
     if (!obj)
         return nullptr;

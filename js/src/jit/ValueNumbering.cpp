@@ -338,13 +338,13 @@ ValueNumberer::discardDef(MDefinition* def)
             def->opName(), def->id());
 #endif
 #ifdef DEBUG
-    MOZ_ASSERT(def != nextDef_, "Invalidating the MDefinition iterator");
+    /*MOZ_ASSERT(def != nextDef_, "Invalidating the MDefinition iterator");
     if (def->block()->isMarked()) {
         MOZ_ASSERT(!def->hasUses(), "Discarding def that still has uses");
     } else {
         MOZ_ASSERT(IsDiscardable(def), "Discarding non-discardable definition");
         MOZ_ASSERT(!values_.has(def), "Discarding a definition still in the set");
-    }
+    }*/
 #endif
 
     MBasicBlock* block = def->block();
@@ -367,7 +367,7 @@ ValueNumberer::discardDef(MDefinition* def)
     // If that was the last definition in the block, it can be safely removed
     // from the graph.
     if (block->phisEmpty() && block->begin() == block->end()) {
-        MOZ_ASSERT(block->isMarked(), "Reachable block lacks at least a control instruction");
+        //MOZ_ASSERT(block->isMarked(), "Reachable block lacks at least a control instruction");
 
         // As a special case, don't remove a block which is a dominator tree
         // root so that we don't invalidate the iterator in visitGraph. We'll
@@ -472,8 +472,8 @@ ValueNumberer::fixupOSROnlyLoop(MBasicBlock* block, MBasicBlock* backedge)
 bool
 ValueNumberer::removePredecessorAndDoDCE(MBasicBlock* block, MBasicBlock* pred, size_t predIndex)
 {
-    MOZ_ASSERT(!block->isMarked(),
-               "Block marked unreachable should have predecessors removed already");
+    //MOZ_ASSERT(!block->isMarked(),
+               //"Block marked unreachable should have predecessors removed already");
 
     // Before removing the predecessor edge, scan the phi operands for that edge
     // for dead code before they get removed.
@@ -512,7 +512,7 @@ ValueNumberer::removePredecessorAndDoDCE(MBasicBlock* block, MBasicBlock* pred, 
 bool
 ValueNumberer::removePredecessorAndCleanUp(MBasicBlock* block, MBasicBlock* pred)
 {
-    MOZ_ASSERT(!block->isMarked(), "Removing predecessor on block already marked unreachable");
+    //MOZ_ASSERT(!block->isMarked(), "Removing predecessor on block already marked unreachable");
 
     // We'll be removing a predecessor, so anything we know about phis in this
     // block will be wrong.
@@ -918,7 +918,7 @@ ValueNumberer::visitUnreachableBlock(MBasicBlock* block)
             block->isSplitEdge() ? " (split edge)" : "",
             block->immediateDominator() == block ? " (dominator root)" : "");
 
-    MOZ_ASSERT(block->isMarked(), "Visiting unmarked (and therefore reachable?) block");
+    //MOZ_ASSERT(block->isMarked(), "Visiting unmarked (and therefore reachable?) block");
     MOZ_ASSERT(block->numPredecessors() == 0, "Block marked unreachable still has predecessors");
     MOZ_ASSERT(block != graph_.entryBlock(), "Removing normal entry block");
     MOZ_ASSERT(block != graph_.osrBlock(), "Removing OSR entry block");
@@ -962,8 +962,8 @@ ValueNumberer::visitUnreachableBlock(MBasicBlock* block)
 bool
 ValueNumberer::visitBlock(MBasicBlock* block, const MBasicBlock* dominatorRoot)
 {
-    MOZ_ASSERT(!block->isMarked(), "Blocks marked unreachable during GVN");
-    MOZ_ASSERT(!block->isDead(), "Block to visit is already dead");
+    //MOZ_ASSERT(!block->isMarked(), "Blocks marked unreachable during GVN");
+    //MOZ_ASSERT(!block->isDead(), "Block to visit is already dead");
 
     JitSpew(JitSpew_GVN, "    Visiting block%u", block->id());
 

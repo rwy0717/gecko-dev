@@ -3552,7 +3552,7 @@ CodeGenerator::visitPostWriteBarrierCommonO(LPostBarrierType* lir, OutOfLineCode
 
     if (lir->object()->isConstant()) {
         // Constant nursery objects cannot appear here, see LIRGenerator::visitPostWriteElementBarrier.
-        MOZ_ASSERT(!IsInsideNursery(&lir->object()->toConstant()->toObject()));
+        //MOZ_ASSERT(!IsInsideNursery(&lir->object()->toConstant()->toObject()));
     } else {
         masm.branchPtrInNurseryChunk(Assembler::Equal, ToRegister(lir->object()), temp,
                                      ool->rejoin());
@@ -3577,7 +3577,7 @@ CodeGenerator::visitPostWriteBarrierCommonV(LPostBarrierType* lir, OutOfLineCode
 
     if (lir->object()->isConstant()) {
         // Constant nursery objects cannot appear here, see LIRGenerator::visitPostWriteElementBarrier.
-        MOZ_ASSERT(!IsInsideNursery(&lir->object()->toConstant()->toObject()));
+        //MOZ_ASSERT(!IsInsideNursery(&lir->object()->toConstant()->toObject()));
     } else {
         masm.branchPtrInNurseryChunk(Assembler::Equal, ToRegister(lir->object()), temp,
                                      ool->rejoin());

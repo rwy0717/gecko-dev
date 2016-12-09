@@ -466,7 +466,7 @@ FunctionBox::FunctionBox(ExclusiveContext* cx, LifoAlloc& alloc, ObjectBox* trac
     // Functions created at parse time may be set singleton after parsing and
     // baked into JIT code, so they must be allocated tenured. They are held by
     // the JSScript so cannot be collected during a minor GC anyway.
-    MOZ_ASSERT(fun->isTenured());
+    //MOZ_ASSERT(fun->isTenured());
 }
 
 void

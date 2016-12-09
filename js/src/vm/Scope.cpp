@@ -586,7 +586,7 @@ FunctionScope::create(ExclusiveContext* cx, Handle<Data*> data,
                       bool hasParameterExprs, bool needsEnvironment,
                       HandleFunction fun, HandleScope enclosing)
 {
-    MOZ_ASSERT(fun->isTenured());
+    //MOZ_ASSERT(fun->isTenured());
 
     // FunctionScope::Data has GCManagedDeletePolicy because it contains a
     // GCPtr. Destruction of |copy| below may trigger calls into the GC.

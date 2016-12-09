@@ -231,8 +231,8 @@ class ImmGCPtr
     {
         // Nursery pointers can't be used if the main thread might be currently
         // performing a minor GC.
-        MOZ_ASSERT_IF(ptr && !ptr->isTenured(),
-                      !CurrentThreadIsIonCompilingSafeForMinorGC());
+        //MOZ_ASSERT_IF(ptr && !ptr->isTenured(),
+        //              !CurrentThreadIsIonCompilingSafeForMinorGC());
 
         // asm.js shouldn't be creating GC things
         MOZ_ASSERT(!IsCompilingAsmJS());

@@ -373,8 +373,8 @@ ExecutableAllocator::poisonCode(JSRuntime* rt, JitPoisonRangeVector& ranges)
 
 #ifdef DEBUG
     // Make sure no pools have the mark bit set.
-    for (size_t i = 0; i < ranges.length(); i++)
-        MOZ_ASSERT(!ranges[i].pool->isMarked());
+    //for (size_t i = 0; i < ranges.length(); i++)
+        //MOZ_ASSERT(!ranges[i].pool->isMarked());
 #endif
 
     for (size_t i = 0; i < ranges.length(); i++) {

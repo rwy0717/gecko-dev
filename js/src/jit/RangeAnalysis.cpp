@@ -2048,7 +2048,7 @@ RangeAnalysis::analyzeLoopIterationCount(MBasicBlock* header,
         lessEqual = !lessEqual;
     }
 
-    MOZ_ASSERT_IF(rhs, !rhs->block()->isMarked());
+    //MOZ_ASSERT_IF(rhs, !rhs->block()->isMarked());
 
     // Ensure the lhs is a phi node from the start of the loop body.
     if (!lhs.term || !lhs.term->isPhi() || lhs.term->block() != header)
@@ -2260,7 +2260,7 @@ RangeAnalysis::tryHoistBoundsCheck(MBasicBlock* header, MBoundsCheck* ins)
         return false;
 
     MBasicBlock* preLoop = header->loopPredecessor();
-    MOZ_ASSERT(!preLoop->isMarked());
+    //MOZ_ASSERT(!preLoop->isMarked());
 
     MDefinition* lowerTerm = ConvertLinearSum(alloc(), preLoop, lower->sum);
     if (!lowerTerm)

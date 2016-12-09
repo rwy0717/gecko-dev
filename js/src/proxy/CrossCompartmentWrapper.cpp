@@ -544,8 +544,8 @@ js::NukeCrossCompartmentWrappers(JSContext* cx,
 void
 js::RemapWrapper(JSContext* cx, JSObject* wobjArg, JSObject* newTargetArg)
 {
-    MOZ_ASSERT(!IsInsideNursery(wobjArg));
-    MOZ_ASSERT(!IsInsideNursery(newTargetArg));
+    //MOZ_ASSERT(!IsInsideNursery(wobjArg));
+    //MOZ_ASSERT(!IsInsideNursery(newTargetArg));
 
     RootedObject wobj(cx, wobjArg);
     RootedObject newTarget(cx, newTargetArg);
@@ -611,8 +611,8 @@ JS_FRIEND_API(bool)
 js::RemapAllWrappersForObject(JSContext* cx, JSObject* oldTargetArg,
                               JSObject* newTargetArg)
 {
-    MOZ_ASSERT(!IsInsideNursery(oldTargetArg));
-    MOZ_ASSERT(!IsInsideNursery(newTargetArg));
+    //MOZ_ASSERT(!IsInsideNursery(oldTargetArg));
+    //MOZ_ASSERT(!IsInsideNursery(newTargetArg));
 
     RootedValue origv(cx, ObjectValue(*oldTargetArg));
     RootedObject newTarget(cx, newTargetArg);

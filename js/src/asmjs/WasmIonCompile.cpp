@@ -1624,7 +1624,7 @@ class FunctionCompiler
             ins->replaceSuccessor(patches[i].index, join);
         }
 
-        MOZ_ASSERT_IF(curBlock_, !curBlock_->isMarked());
+        //MOZ_ASSERT_IF(curBlock_, !curBlock_->isMarked());
         for (uint32_t i = 0; i < join->numPredecessors(); i++)
             join->getPredecessor(i)->unmark();
 

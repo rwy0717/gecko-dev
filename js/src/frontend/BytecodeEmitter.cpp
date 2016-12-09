@@ -9689,7 +9689,7 @@ CGObjectList::finish(ObjectArray* array)
     do {
         --cursor;
         MOZ_ASSERT(!*cursor);
-        MOZ_ASSERT(objbox->object->isTenured());
+        //MOZ_ASSERT(objbox->object->isTenured());
         *cursor = objbox->object;
     } while ((objbox = objbox->emitLink) != nullptr);
     MOZ_ASSERT(cursor == array->vector);

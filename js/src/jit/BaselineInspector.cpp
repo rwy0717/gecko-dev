@@ -923,8 +923,8 @@ BaselineInspector::instanceOfData(jsbytecode* pc, Shape** shape, uint32_t* slot,
     *prototypeObject = optStub->prototypeObject();
     *slot = optStub->slot();
 
-    if (IsInsideNursery(*prototypeObject))
-        return false;
+    //if (IsInsideNursery(*prototypeObject))
+    //    return false;
 
     return true;
 }

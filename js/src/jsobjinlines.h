@@ -123,7 +123,7 @@ js::NativeObject::sweepDictionaryListPointer()
 /* static */ inline bool
 JSObject::setSingleton(js::ExclusiveContext* cx, js::HandleObject obj)
 {
-    MOZ_ASSERT_IF(cx->isJSContext(), !IsInsideNursery(obj));
+    //MOZ_ASSERT_IF(cx->isJSContext(), !IsInsideNursery(obj));
 
     js::ObjectGroup* group = js::ObjectGroup::lazySingletonGroup(cx, obj->getClass(),
                                                                  obj->taggedProto());

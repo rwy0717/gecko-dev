@@ -723,7 +723,7 @@ UnmappedArgumentsObject::obj_enumerate(JSContext* cx, HandleObject obj)
 void
 ArgumentsObject::finalize(FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(!IsInsideNursery(obj));
+    //MOZ_ASSERT(!IsInsideNursery(obj));
     if (obj->as<ArgumentsObject>().data()) {
         fop->free_(obj->as<ArgumentsObject>().maybeRareData());
         fop->free_(obj->as<ArgumentsObject>().data());

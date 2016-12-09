@@ -66,7 +66,7 @@ SetUnboxedValueNoTypeChange(JSObject* unboxedObject,
         return;
 
       case JSVAL_TYPE_STRING: {
-        MOZ_ASSERT(!IsInsideNursery(v.toString()));
+        //MOZ_ASSERT(!IsInsideNursery(v.toString()));
         JSString** np = reinterpret_cast<JSString**>(p);
         if (preBarrier)
             JSString::writeBarrierPre(*np);
@@ -125,7 +125,7 @@ SetUnboxedValue(ExclusiveContext* cx, JSObject* unboxedObject, jsid id,
 
       case JSVAL_TYPE_STRING:
         if (v.isString()) {
-            MOZ_ASSERT(!IsInsideNursery(v.toString()));
+            //MOZ_ASSERT(!IsInsideNursery(v.toString()));
             JSString** np = reinterpret_cast<JSString**>(p);
             if (preBarrier)
                 JSString::writeBarrierPre(*np);

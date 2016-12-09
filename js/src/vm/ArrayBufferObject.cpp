@@ -1028,7 +1028,7 @@ ArrayBufferObject::create(JSContext* cx, uint32_t nbytes, BufferContents content
     }
 
     MOZ_ASSERT(obj->getClass() == &class_);
-    MOZ_ASSERT(!gc::IsInsideNursery(obj));
+    //MOZ_ASSERT(!gc::IsInsideNursery(obj));
 
     if (!contents) {
         void* data = obj->inlineDataPointer();
@@ -1284,7 +1284,7 @@ InnerViewTable::addView(JSContext* cx, ArrayBufferObject* buffer, ArrayBufferVie
 
     Map::AddPtr p = map.lookupForAdd(buffer);
 
-    MOZ_ASSERT(!gc::IsInsideNursery(buffer));
+    //MOZ_ASSERT(!gc::IsInsideNursery(buffer));
     bool addToNursery = nurseryKeysValid && gc::IsInsideNursery(view);
 
     if (p) {

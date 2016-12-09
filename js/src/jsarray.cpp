@@ -3534,7 +3534,7 @@ js::NewDenseFullyAllocatedArrayWithTemplate(JSContext* cx, uint32_t length, JSOb
 JSObject*
 js::NewDenseCopyOnWriteArray(JSContext* cx, HandleArrayObject templateObject, gc::InitialHeap heap)
 {
-    MOZ_ASSERT(!gc::IsInsideNursery(templateObject));
+    //MOZ_ASSERT(!gc::IsInsideNursery(templateObject));
 
     ArrayObject* arr = ArrayObject::createCopyOnWriteArray(cx, heap, templateObject);
     if (!arr)

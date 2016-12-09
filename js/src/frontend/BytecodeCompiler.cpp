@@ -438,7 +438,7 @@ BytecodeCompiler::compileFunctionBody(MutableHandleFunction fun,
                                       GeneratorKind generatorKind)
 {
     MOZ_ASSERT(fun);
-    MOZ_ASSERT(fun->isTenured());
+    //MOZ_ASSERT(fun->isTenured());
 
     fun->setArgCount(formals.length());
 

@@ -2759,8 +2759,8 @@ AssertReversePostorder(MIRGraph& graph)
         for (size_t i = 0; i < block->numPredecessors(); i++) {
             MBasicBlock* pred = block->getPredecessor(i);
             if (!pred->isMarked()) {
-                MOZ_ASSERT(pred->isLoopBackedge());
-                MOZ_ASSERT(block->backedge() == pred);
+                //MOZ_ASSERT(pred->isLoopBackedge());
+                //MOZ_ASSERT(block->backedge() == pred);
             }
         }
 
@@ -4412,8 +4412,8 @@ size_t
 jit::MarkLoopBlocks(MIRGraph& graph, MBasicBlock* header, bool* canOsr)
 {
 #ifdef DEBUG
-    for (ReversePostorderIterator i = graph.rpoBegin(), e = graph.rpoEnd(); i != e; ++i)
-        MOZ_ASSERT(!i->isMarked(), "Some blocks already marked");
+    //for (ReversePostorderIterator i = graph.rpoBegin(), e = graph.rpoEnd(); i != e; ++i)
+        //MOZ_ASSERT(!i->isMarked(), "Some blocks already marked");
 #endif
 
     MBasicBlock* osrBlock = graph.osrBlock();
@@ -4509,8 +4509,8 @@ jit::UnmarkLoopBlocks(MIRGraph& graph, MBasicBlock* header)
     }
 
 #ifdef DEBUG
-    for (ReversePostorderIterator i = graph.rpoBegin(), e = graph.rpoEnd(); i != e; ++i)
-        MOZ_ASSERT(!i->isMarked(), "Not all blocks got unmarked");
+    //for (ReversePostorderIterator i = graph.rpoBegin(), e = graph.rpoEnd(); i != e; ++i)
+        //MOZ_ASSERT(!i->isMarked(), "Not all blocks got unmarked");
 #endif
 }
 
@@ -4520,8 +4520,8 @@ MakeLoopContiguous(MIRGraph& graph, MBasicBlock* header, size_t numMarked)
 {
     MBasicBlock* backedge = header->backedge();
 
-    MOZ_ASSERT(header->isMarked(), "Loop header is not part of loop");
-    MOZ_ASSERT(backedge->isMarked(), "Loop backedge is not part of loop");
+    //MOZ_ASSERT(header->isMarked(), "Loop header is not part of loop");
+    //MOZ_ASSERT(backedge->isMarked(), "Loop backedge is not part of loop");
 
     // If there are any blocks between the loop header and the loop backedge
     // that are not part of the loop, prepare to move them to the end. We keep

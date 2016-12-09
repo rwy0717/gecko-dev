@@ -346,7 +346,7 @@ UnboxedPlainObject::ensureExpando(JSContext* cx, Handle<UnboxedPlainObject*> obj
     // Otherwise barriers triggered on the original object for writes to the
     // expando (as can happen in the JIT) won't see the tenured->nursery edge.
     // See WholeCellEdges::mark.
-    MOZ_ASSERT_IF(!IsInsideNursery(expando), !IsInsideNursery(obj));
+    //MOZ_ASSERT_IF(!IsInsideNursery(expando), !IsInsideNursery(obj));
 
     // As with setValue(), we need to manually trigger post barriers on the
     // whole object. If we treat the field as a GCPtrObject and later
@@ -1181,7 +1181,7 @@ UnboxedArrayObject::objectMoved(JSObject* obj, const JSObject* old)
 /* static */ void
 UnboxedArrayObject::finalize(FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(!IsInsideNursery(obj));
+    //MOZ_ASSERT(!IsInsideNursery(obj));
     if (!obj->as<UnboxedArrayObject>().hasInlineElements())
         js_free(obj->as<UnboxedArrayObject>().elements());
 }

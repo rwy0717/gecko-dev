@@ -861,7 +861,7 @@ ObjectBox::ObjectBox(JSObject* object, ObjectBox* traceLink)
     emitLink(nullptr)
 {
     MOZ_ASSERT(!object->is<JSFunction>());
-    MOZ_ASSERT(object->isTenured());
+    //MOZ_ASSERT(object->isTenured());
 }
 
 ObjectBox::ObjectBox(JSFunction* function, ObjectBox* traceLink)
@@ -871,7 +871,7 @@ ObjectBox::ObjectBox(JSFunction* function, ObjectBox* traceLink)
 {
     MOZ_ASSERT(object->is<JSFunction>());
     MOZ_ASSERT(asFunctionBox()->function() == function);
-    MOZ_ASSERT(object->isTenured());
+    //MOZ_ASSERT(object->isTenured());
 }
 
 FunctionBox*

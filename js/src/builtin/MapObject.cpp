@@ -198,7 +198,7 @@ MapIteratorObject::next(JSContext* cx, Handle<MapIteratorObject*> mapIterator,
     // Check invariants for inlined _GetNextMapEntryForIterator.
 
     // The array should be tenured, so that post-barrier can be done simply.
-    MOZ_ASSERT(resultPairObj->isTenured());
+    //MOZ_ASSERT(resultPairObj->isTenured());
 
     // The array elements should be fixed.
     MOZ_ASSERT(resultPairObj->hasFixedElements());

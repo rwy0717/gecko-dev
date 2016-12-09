@@ -147,7 +147,7 @@ TypedArrayObject::trace(JSTracer* trc, JSObject* objArg)
 void
 TypedArrayObject::finalize(FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(!IsInsideNursery(obj));
+    //MOZ_ASSERT(!IsInsideNursery(obj));
     TypedArrayObject* curObj = &obj->as<TypedArrayObject>();
 
     // Typed arrays with a buffer object do not need to be free'd
@@ -181,7 +181,7 @@ TypedArrayObject::objectMovedDuringMinorGC(JSTracer* trc, JSObject* obj, const J
     TypedArrayObject* newObj = &obj->as<TypedArrayObject>();
     const TypedArrayObject* oldObj = &old->as<TypedArrayObject>();
     MOZ_ASSERT(newObj->elements() == oldObj->elements());
-    MOZ_ASSERT(obj->isTenured());
+    //MOZ_ASSERT(obj->isTenured());
 
     // Typed arrays with a buffer object do not need an update.
     if (oldObj->hasBuffer())
@@ -502,8 +502,8 @@ class TypedArrayObjectTemplate : public TypedArrayObject
                 // nursery chunk, and a zero-length buffer will erroneously be
                 // perceived as being inside the nursery; sidestep that.
                 if (isSharedMemory) {
-                    MOZ_ASSERT(buffer->byteLength() == 0 &&
-                               (uintptr_t(ptr.unwrapValue()) & gc::ChunkMask) == 0);
+                    //MOZ_ASSERT(buffer->byteLength() == 0 &&
+                    //           (uintptr_t(ptr.unwrapValue()) & gc::ChunkMask) == 0);
                 } else {
                     cx->runtime()->gc.storeBuffer.putWholeCell(obj);
                 }
@@ -607,8 +607,8 @@ class TypedArrayObjectTemplate : public TypedArrayObject
         if (buf) {
 #ifdef DEBUG
             Nursery& nursery = cx->runtime()->gc.nursery;
-            MOZ_ASSERT_IF(!nursery.isInside(buf) && !tarray->hasInlineElements(),
-                          tarray->isTenured());
+            //MOZ_ASSERT_IF(!nursery.isInside(buf) && !tarray->hasInlineElements(),
+            //              tarray->isTenured());
 #endif
             tarray->initPrivate(buf);
         } else {

@@ -1559,7 +1559,7 @@ JSObject::swap(JSContext* cx, HandleObject a, HandleObject b)
      * Neither object may be in the nursery, but ensure we update any embedded
      * nursery pointers in either object.
      */
-    MOZ_ASSERT(!IsInsideNursery(a) && !IsInsideNursery(b));
+    //MOZ_ASSERT(!IsInsideNursery(a) && !IsInsideNursery(b));
     cx->runtime()->gc.storeBuffer.putWholeCell(a);
     cx->runtime()->gc.storeBuffer.putWholeCell(b);
 

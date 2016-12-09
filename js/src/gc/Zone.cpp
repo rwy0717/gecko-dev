@@ -39,7 +39,8 @@ JS::Zone::Zone(JSRuntime* rt)
     data(nullptr),
     isSystem(false),
     usedByExclusiveThread(false),
-    active(false) {}
+    active(false),
+    jitZone_(nullptr) {}
 
 Zone::DebuggerVector*
 Zone::getOrCreateDebuggers(JSContext* cx)
@@ -47,7 +48,24 @@ Zone::getOrCreateDebuggers(JSContext* cx)
     return nullptr;
 }
 
+Zone::~Zone()
+{
+    js_delete(jitZone_);
+}
+
 JS_PUBLIC_API(void)
 JS::shadow::RegisterWeakCache(JS::Zone* zone, WeakCache<void*>* cachep)
 {
+}
+
+js::jit::JitZone*
+Zone::createJitZone(JSContext* cx)
+{
+    MOZ_ASSERT(!jitZone_);
+
+    if (!cx->runtime()->getJitRuntime(cx))
+        return nullptr;
+
+    jitZone_ = cx->new_<js::jit::JitZone>();
+    return jitZone_;
 }

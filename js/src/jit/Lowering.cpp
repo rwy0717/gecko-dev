@@ -2707,7 +2707,7 @@ LIRGenerator::visitPostWriteElementBarrier(MPostWriteElementBarrier* ins)
     // objects to a register.
     bool useConstantObject =
         ins->object()->isConstant() &&
-        !IsInsideNursery(&ins->object()->toConstant()->toObject());
+        true; //!IsInsideNursery(&ins->object()->toConstant()->toObject());
 
     switch (ins->value()->type()) {
       case MIRType::Object:

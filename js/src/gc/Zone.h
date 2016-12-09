@@ -94,7 +94,7 @@ struct Zone : public JS::shadow::Zone,
 {
     explicit Zone(JSRuntime* rt);
 	
-    ~Zone() {}
+    ~Zone();
     MOZ_MUST_USE bool init(bool isSystem) { return true; }
 
     void discardJitCode(js::FreeOp* fop) {}
@@ -154,8 +154,8 @@ struct Zone : public JS::shadow::Zone,
 
     const bool* addressOfNeedsIncrementalBarrier() const { return nullptr; }
 
-    js::jit::JitZone* getJitZone(JSContext* cx) { return nullptr; }
-    js::jit::JitZone* jitZone() { return nullptr; }
+    js::jit::JitZone* getJitZone(JSContext* cx) { return jitZone_ ? jitZone_ : createJitZone(cx); }
+    js::jit::JitZone* jitZone() { return jitZone_; }
 
     bool isAtomsZone() const { return true; }
     bool isSelfHostingZone() const { return true; }
@@ -167,6 +167,9 @@ struct Zone : public JS::shadow::Zone,
 #endif
 
     using DebuggerVector = js::Vector<js::Debugger*, 0, js::SystemAllocPolicy>;
+
+  private:
+    js::jit::JitZone* createJitZone(JSContext* cx);
 
   public:
     bool hasDebuggers() const { return true; }
@@ -336,6 +339,9 @@ struct Zone : public JS::shadow::Zone,
 #endif
     friend bool js::CurrentThreadCanAccessZone(Zone* zone);
     friend class js::gc::GCRuntime;
+
+  private:
+    js::jit::JitZone* jitZone_;
 };
 
 } // namespace JS

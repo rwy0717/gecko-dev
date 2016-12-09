@@ -120,7 +120,7 @@ Table::set(uint32_t index, void* code, Instance& instance)
         elem.code = code;
         elem.tls = &instance.tlsData();
 
-        MOZ_ASSERT(elem.tls->instance->objectUnbarriered()->isTenured(), "no writeBarrierPost");
+        //MOZ_ASSERT(elem.tls->instance->objectUnbarriered()->isTenured(), "no writeBarrierPost");
     } else {
         internalArray()[index] = code;
     }

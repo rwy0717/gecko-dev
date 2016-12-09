@@ -2132,8 +2132,8 @@ HeapTypeSetKey::constant(CompilerConstraintList* constraints, Value* valOut)
     Value val = obj->as<NativeObject>().getSlot(shape->slot());
 
     // If the value is a pointer to an object in the nursery, don't optimize.
-    if (val.isGCThing() && IsInsideNursery(val.toGCThing()))
-        return false;
+    //if (val.isGCThing() && IsInsideNursery(val.toGCThing()))
+    //    return false;
 
     // If the value is a string that's not atomic, don't optimize.
     if (val.isString() && !val.toString()->isAtom())
@@ -3384,7 +3384,7 @@ PreliminaryObjectArray::registerNewObject(JSObject* res)
     // The preliminary object pointers are weak, and won't be swept properly
     // during nursery collections, so the preliminary objects need to be
     // initially tenured.
-    MOZ_ASSERT(!IsInsideNursery(res));
+    //MOZ_ASSERT(!IsInsideNursery(res));
 
     for (size_t i = 0; i < COUNT; i++) {
         if (!objects[i]) {

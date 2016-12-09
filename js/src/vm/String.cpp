@@ -77,7 +77,7 @@ JS::ubi::Concrete<JSString>::size(mozilla::MallocSizeOf mallocSizeOf) const
 
     // We can't use mallocSizeof on things in the nursery. At the moment,
     // strings are never in the nursery, but that may change.
-    MOZ_ASSERT(!IsInsideNursery(&str));
+    //MOZ_ASSERT(!IsInsideNursery(&str));
     size += str.sizeOfExcludingThis(mallocSizeOf);
 
     return size;
