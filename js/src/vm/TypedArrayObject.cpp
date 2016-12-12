@@ -606,7 +606,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
 
         if (buf) {
 #ifdef DEBUG
-            Nursery& nursery = cx->runtime()->gc.nursery;
+            //Nursery& nursery = cx->runtime()->gc.nursery;
             //MOZ_ASSERT_IF(!nursery.isInside(buf) && !tarray->hasInlineElements(),
             //              tarray->isTenured());
 #endif

@@ -2754,7 +2754,7 @@ AssertReversePostorder(MIRGraph& graph)
     // Check that every block is visited after all its predecessors (except backedges).
     for (ReversePostorderIterator iter(graph.rpoBegin()); iter != graph.rpoEnd(); ++iter) {
         MBasicBlock* block = *iter;
-        MOZ_ASSERT(!block->isMarked());
+        //MOZ_ASSERT(!block->isMarked());
 
         for (size_t i = 0; i < block->numPredecessors(); i++) {
             MBasicBlock* pred = block->getPredecessor(i);
