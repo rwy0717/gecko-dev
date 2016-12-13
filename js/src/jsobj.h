@@ -638,22 +638,27 @@ struct JSObject_Slots16 : JSObject { void* data[3]; js::Value fslots[16]; };
 /* static */ MOZ_ALWAYS_INLINE void
 JSObject::readBarrier(JSObject* obj)
 {
+#ifndef OMR
     MOZ_ASSERT_IF(obj, !isNullLike(obj));
     if (obj && obj->isTenured())
         obj->asTenured().readBarrier(&obj->asTenured());
+#endif // !OMR
 }
 
 /* static */ MOZ_ALWAYS_INLINE void
 JSObject::writeBarrierPre(JSObject* obj)
 {
+#ifndef OMR
     MOZ_ASSERT_IF(obj, !isNullLike(obj));
     if (obj && obj->isTenured())
         obj->asTenured().writeBarrierPre(&obj->asTenured());
+#endif // OMR
 }
 
 /* static */ MOZ_ALWAYS_INLINE void
 JSObject::writeBarrierPost(void* cellp, JSObject* prev, JSObject* next)
 {
+#ifndef OMR
     MOZ_ASSERT(cellp);
     MOZ_ASSERT_IF(next, !IsNullTaggedPointer(next));
     MOZ_ASSERT_IF(prev, !IsNullTaggedPointer(prev));
@@ -674,6 +679,7 @@ JSObject::writeBarrierPost(void* cellp, JSObject* prev, JSObject* next)
     // Remove the prev entry if the new value does not need it.
     if (prev && (buffer = prev->storeBuffer()))
         buffer->unputCell(static_cast<js::gc::Cell**>(cellp));
+#endif // OMR
 }
 
 namespace js {

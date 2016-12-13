@@ -1249,9 +1249,9 @@ Shape::Shape(const StackShape& other, uint32_t nfixed)
     parent(nullptr)
 {
 #ifdef DEBUG
-    //gc::AllocKind allocKind = getAllocKind();
-    //MOZ_ASSERT_IF(other.isAccessorShape(), allocKind == gc::AllocKind::ACCESSOR_SHAPE);
-    //MOZ_ASSERT_IF(allocKind == gc::AllocKind::SHAPE, !other.isAccessorShape());
+    gc::AllocKind allocKind = getAllocKind();
+    MOZ_ASSERT_IF(other.isAccessorShape(), allocKind == gc::AllocKind::ACCESSOR_SHAPE);
+    MOZ_ASSERT_IF(allocKind == gc::AllocKind::SHAPE, !other.isAccessorShape());
 #endif
 
     MOZ_ASSERT_IF(attrs & (JSPROP_GETTER | JSPROP_SETTER), attrs & JSPROP_SHARED);

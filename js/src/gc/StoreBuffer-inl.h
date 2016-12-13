@@ -14,6 +14,8 @@
 namespace js {
 namespace gc {
 
+#ifndef OMR // Disable Arenas and write barriers
+
 inline /* static */ size_t
 ArenaCellSet::getCellIndex(const TenuredCell* cell)
 {
@@ -45,6 +47,8 @@ inline void
 StoreBuffer::putWholeCell(Cell* cell)
 {
 }
+
+#endif // ! OMR
 
 } // namespace gc
 } // namespace js

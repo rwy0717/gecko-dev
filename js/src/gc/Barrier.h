@@ -683,12 +683,14 @@ class HeapSlot : public WriteBarrieredBase<Value>
 
   private:
     void post(NativeObject* owner, Kind kind, uint32_t slot, const Value& target) {
-        //MOZ_ASSERT(preconditionForWriteBarrierPost(owner, kind, slot, target));
+#ifndef OMR // writebarrier
+        MOZ_ASSERT(preconditionForWriteBarrierPost(owner, kind, slot, target));
         if (this->value.isObject()) {
             gc::Cell* cell = reinterpret_cast<gc::Cell*>(&this->value.toObject());
             if (cell->storeBuffer())
                 cell->storeBuffer()->putSlot(owner, kind, slot, 1);
         }
+#endif // ! OMR writebarrier
     }
 };
 

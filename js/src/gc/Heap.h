@@ -48,9 +48,11 @@ TraceManuallyBarrieredGenericPointerEdge(JSTracer* trc, gc::Cell** thingp, const
 
 namespace gc {
 
+#ifndef OMR
 class Arena;
 class ArenaCellSet;
 struct Chunk;
+#endif // ! OMR
 
 /*
  * This flag allows an allocation site to request a specific heap based upon the
@@ -197,7 +199,9 @@ struct Cell
 
   protected:
     inline uintptr_t address() const;
+#ifndef OMR
     inline Chunk* chunk() const;
+#endif // ! OMR
 
   public:
     Flags flags_;
@@ -225,8 +229,12 @@ class TenuredCell : public Cell
     static MOZ_ALWAYS_INLINE bool isNullLike(const Cell* thing) { return !thing; }
 
     // Access to the arena.
+
+#ifndef OMR // Disable Arenas
     inline Arena* arena() const;
+#endif // ! OMR
     inline JS::TraceKind getTraceKind() const;
+#ifndef OMR // Disable Arenas
     inline JS::Zone* zone() const;
     inline JS::Zone* zoneFromAnyThread() const;
     inline bool isInsideZone(JS::Zone* zone) const;
@@ -237,6 +245,7 @@ class TenuredCell : public Cell
     MOZ_ALWAYS_INLINE JS::shadow::Zone* shadowZoneFromAnyThread() const {
         return JS::shadow::Zone::asShadowZone(zoneFromAnyThread());
     }
+#endif // ! OMR
 
     static MOZ_ALWAYS_INLINE void readBarrier(TenuredCell* thing);
     static MOZ_ALWAYS_INLINE void writeBarrierPre(TenuredCell* thing);
@@ -266,6 +275,8 @@ class FreeSpan
         return 0;
     }
 };
+
+#ifndef OMR // Arenas
 
 /*
  * Arenas are the allocation units of the tenured heap in the GC. An arena
@@ -477,6 +488,8 @@ Arena::chunk() const
 	return nullptr;
 }
 
+#endif // ! OMR Arenas
+
 MOZ_ALWAYS_INLINE const TenuredCell&
 Cell::asTenured() const
 {
@@ -488,6 +501,8 @@ Cell::asTenured()
 {
     return *static_cast<TenuredCell*>(this);
 }
+
+#ifndef OMR // Disable getting Runtime without context
 
 inline JSRuntime*
 Cell::runtimeFromMainThread() const
@@ -513,11 +528,15 @@ Cell::shadowRuntimeFromAnyThread() const
     return nullptr;
 }
 
+#endif // ! OMR
+
 inline uintptr_t
 Cell::address() const
 {
 	return 0;
 }
+
+#ifndef OMR // Disable Chunks, write barriers
 
 Chunk*
 Cell::chunk() const
@@ -530,6 +549,8 @@ Cell::storeBuffer() const
 {
     return nullptr;
 }
+
+#endif // ! OMR
 
 inline JS::TraceKind
 Cell::getTraceKind() const
@@ -576,17 +597,22 @@ TenuredCell::copyMarkBitsFrom(const TenuredCell* src)
 {
 }
 
+#ifndef OMR // Disable Arenas
 inline Arena*
 TenuredCell::arena() const
 {
     return NULL;
 }
+#endif // ! OMR
 
+// OMRTODO: What is a trace kind?
 JS::TraceKind
 TenuredCell::getTraceKind() const
 {
     return (JS::TraceKind)0;
 }
+
+#ifndef OMR // Disable getting zone without context
 
 JS::Zone*
 TenuredCell::zone() const
@@ -607,6 +633,10 @@ TenuredCell::isInsideZone(JS::Zone* zone) const
 {
     return true;
 }
+
+#endif // ! OMR
+
+// OMRTODO: Implement write barriers
 
 /* static */ MOZ_ALWAYS_INLINE void
 TenuredCell::readBarrier(TenuredCell* thing)
@@ -643,10 +673,12 @@ TenuredCell::isAligned() const
 {
     return true;
 }
-#endif
+#endif // DEBUG
 
+#ifndef OMR
 static const int32_t ChunkLocationOffsetFromLastByte =
     int32_t(gc::ChunkLocationOffset) - int32_t(gc::ChunkMask);
+#endif // ! OMR
 
 } /* namespace gc */
 } /* namespace js */
