@@ -486,56 +486,10 @@ JS_FRIEND_API(bool) JS::isGCEnabled() { return true; }
 #endif
 
 #if defined(OMR)
-static OMRPortLibrary portLibrary_;
 
 static omr_error_t InitializeOMR()
 {
-	OMRPORT_ACCESS_FROM_OMRPORT(&portLibrary_);
-	omr_error_t rc = OMR_ERROR_NONE;
-	omrthread_t j9self = NULL;
-
-	if (0 != omrthread_init_library()) {
-		fprintf(stderr, "Failed to initialize OMR thread library.\n");
-		rc = OMR_ERROR_INTERNAL;
-		goto failed;
-	}
-
-	/* Recursive omrthread_attach_ex() (i.e. re-attaching a thread that is already
-	* attached) is cheaper and less fragile than non-recursive. If performing a
-	* sequence of function calls that are likely to attach & detach internally,
-	* it is more efficient to call omrthread_attach_ex() before the entire block.
-	*/
-	if (0 != omrthread_attach_ex(&j9self, J9THREAD_ATTR_DEFAULT)) {
-		omrtty_printf("Failed to attach main thread.\n");
-		rc = OMR_ERROR_FAILED_TO_ATTACH_NATIVE_THREAD;
-		goto failed;
-	}
-
-	if (0 != omrport_init_library(&portLibrary_, sizeof(OMRPortLibrary))) {
-		fprintf(stderr, "Failed to initialize OMR port library.\n");
-		rc = OMR_ERROR_INTERNAL;
-		goto failed;
-	}
-
-	/* Disable port library signal handling. This mechanism disables everything
-	* except SIGXFSZ. Handling other signals in the port library will interfere
-	* with language-specific signal handlers.
-	*/
-	if (0 != omrsig_set_options(OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS |
-		   OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS)) {
-		omrtty_printf("Failed to disable OMR signal handling.\n");
-		rc = OMR_ERROR_INTERNAL;
-		goto failed;
-	}
-
-	if (OMR_ERROR_NONE != omr_ras_initMemCategories(&portLibrary_)) {
-		omrtty_printf("Failed to initialize OMR RAS memory categories.\n");
-		rc = OMR_ERROR_INTERNAL;
-		goto failed;
-	}
-
-failed:
-return rc; /* TODO: Throw exception with omr error code. */
+    OMR_Initialize_VM(&Nursery::omrVM, &Nursery::omrVMThread, NULL, NULL);
 }
 #endif /* defined(OMR) */
 
@@ -562,22 +516,8 @@ JS_NewContext(uint32_t maxbytes, uint32_t maxNurseryBytes, JSContext* parentCont
 
 #if defined(OMR)
 static omr_error_t TearDownOMR() {
-	omr_error_t rc = OMR_ERROR_NONE;
-	omrthread_t self = NULL;
-
-        intptr_t ret = omrthread_attach_ex(&self, J9THREAD_ATTR_DEFAULT);
-	if (J9THREAD_SUCCESS == ret) {
-		portLibrary_.port_shutdown_library(&portLibrary_);
-		omrthread_detach(self);
-		omrthread_shutdown_library();
-	}
-	else {
-		rc = OMR_ERROR_FAILED_TO_ATTACH_NATIVE_THREAD;
-		fprintf(stderr, "Failed to attach native thread. Return = %d\n", ret);
-	}
-
-	return rc;
- }
+    OMR_Shutdown_VM(Nursery::omrVM, Nursery::omrVMThread);
+}
 #endif /* defined(OMR) */
 
 JS_PUBLIC_API(void)

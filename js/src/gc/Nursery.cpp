@@ -13,6 +13,7 @@
 #include "mozilla/Unused.h"
 
 #include "jscompartment.h"
+#include "jscntxt.h"
 #include "jsfriendapi.h"
 #include "jsgc.h"
 #include "jsutil.h"
@@ -33,6 +34,8 @@
 
 #include "vm/NativeObject-inl.h"
 
+#include "omrgc.h"
+
 using namespace js;
 using namespace gc;
 
@@ -40,6 +43,10 @@ using mozilla::ArrayLength;
 using mozilla::DebugOnly;
 using mozilla::PodCopy;
 using mozilla::PodZero;
+
+
+OMR_VMThread* js::Nursery::omrVMThread = nullptr;
+OMR_VM* js::Nursery::omrVM = nullptr;
 
 void
 js::Nursery::disable()
@@ -49,10 +56,10 @@ js::Nursery::disable()
 
 JSObject*
 js::Nursery::allocateObject(JSContext* cx, size_t size, size_t numDynamic, const js::Class* clasp) {
-	JSObject* obj = (JSObject *)js_malloc(size);
+	JSObject* obj = (JSObject *)OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, size, 0);
 	if (obj) {
 		if (numDynamic > 0)
-			obj->setInitialSlotsMaybeNonNative((HeapSlot *)js_malloc(numDynamic * sizeof(HeapSlot *)));
+			obj->setInitialSlotsMaybeNonNative((HeapSlot *)OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, numDynamic * sizeof(HeapSlot *), 0));
 		else
 			obj->setInitialSlotsMaybeNonNative(nullptr);
 	}

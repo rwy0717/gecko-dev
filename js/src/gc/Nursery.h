@@ -24,6 +24,8 @@
 #include "js/Vector.h"
 #include "vm/SharedMem.h"
 
+#include "omrgc.h"
+
 namespace JS {
 struct Zone;
 } // namespace JS
@@ -78,6 +80,9 @@ CanNurseryAllocateFinalizedClass(const js::Class* const clasp)
 class Nursery
 {
   public:
+    static OMR_VMThread* omrVMThread;
+    static OMR_VM* omrVM;
+
     explicit Nursery(JSRuntime* rt) {}
     ~Nursery() {}
 
@@ -113,17 +118,13 @@ class Nursery
     JSObject* allocateObject(JSContext* cx, size_t size, size_t numDynamic, const js::Class* clasp);
 
     /* Allocate a buffer for a given zone, using the nursery if possible. */
-    void* allocateBuffer(JS::Zone* zone, uint32_t nbytes) { return js_malloc(nbytes); }
+    void* allocateBuffer(JS::Zone* zone, uint32_t nbytes) { return OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, nbytes, 0); }
 
     /*
      * Allocate a buffer for a given object, using the nursery if possible and
      * obj is in the nursery.
      */
-    void* allocateBuffer(JSObject* obj, uint32_t nbytes) { return js_malloc(nbytes); }
-
-    /* Resize an existing object buffer. */
-    void* reallocateBuffer(JSObject* obj, void* oldBuffer,
-                           uint32_t oldBytes, uint32_t newBytes) { return js_malloc(newBytes); }
+    void* allocateBuffer(JSObject* obj, uint32_t nbytes) { return OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, nbytes, 0); }
 
     /* Free an object buffer. */
     void freeBuffer(void* buffer) {}

@@ -17,6 +17,8 @@
 #include "js/TracingAPI.h"
 #include "vm/Runtime.h"
 
+#include "omrgc.h"
+
 namespace js {
 
 // The allocation methods below will not run the garbage collector. If the
@@ -28,14 +30,14 @@ template <typename T>
 static inline T*
 AllocateObjectBuffer(ExclusiveContext* cx, uint32_t count)
 {
-    return (T *)js_malloc(sizeof(T) * count);
+	return (T *)OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, sizeof(T) * count, 0);
 }
 
 template <typename T>
 static inline T*
 AllocateObjectBuffer(ExclusiveContext* cx, JSObject* obj, uint32_t count)
 {
-    return (T *)js_malloc(sizeof(T) * count);
+    return AllocateObjectBuffer<T>(cx, count);
 }
 
 // If this returns null then the old buffer will be left alone.
@@ -44,9 +46,8 @@ static inline T*
 ReallocateObjectBuffer(ExclusiveContext* cx, JSObject* obj, T* oldBuffer,
                        uint32_t oldCount, uint32_t newCount)
 {
-	T *newBuffer = (T *)js_malloc(sizeof(T) * newCount);
+	T *newBuffer = (T *)AllocateObjectBuffer<T>(cx, newCount);
 	memcpy(newBuffer, oldBuffer, sizeof(T) * oldCount);
-	free(oldBuffer);
     return newBuffer;
 }
 
