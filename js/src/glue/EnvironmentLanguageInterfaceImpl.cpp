@@ -98,7 +98,7 @@ MM_EnvironmentLanguageInterfaceImpl::enableInlineTLHAllocate()
 bool
 MM_EnvironmentLanguageInterfaceImpl::isInlineTLHAllocateEnabled()
 {
-	return false
+	return false;
 }
 #endif /* OMR_GC_THREAD_LOCAL_HEAP */
 
