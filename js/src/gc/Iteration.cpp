@@ -42,10 +42,10 @@ js::IterateChunks(JSContext* cx, void* data, IterateChunkCallback chunkCallback)
 {
 }
 
+#endif // OMR
+
 void
 js::IterateScripts(JSContext* cx, JSCompartment* compartment,
                    void* data, IterateScriptCallback scriptCallback)
 {
 }
-
-#endif // OMR

@@ -4247,7 +4247,11 @@ JSScript::AutoDelazify::dropScript()
 JS::ubi::Node::Size
 JS::ubi::Concrete<JSScript>::size(mozilla::MallocSizeOf mallocSizeOf) const
 {
+#ifdef OMR
+    Size size = OmrGcHelper::thingSize(get().getAllocKind());
+#else
     Size size = Arena::thingSize(get().asTenured().getAllocKind());
+#endif
 
     size += get().sizeOfData(mallocSizeOf);
     size += get().sizeOfTypeScript(mallocSizeOf);
@@ -4273,7 +4277,11 @@ JS::ubi::Concrete<JSScript>::scriptFilename() const
 JS::ubi::Node::Size
 JS::ubi::Concrete<js::LazyScript>::size(mozilla::MallocSizeOf mallocSizeOf) const
 {
+#ifdef OMR
+    Size size = js::gc::OmrGcHelper::thingSize(get().getAllocKind());
+#else
     Size size = js::gc::Arena::thingSize(get().asTenured().getAllocKind());
+#endif
     size += get().sizeOfExcludingThis(mallocSizeOf);
     return size;
 }

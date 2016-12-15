@@ -301,9 +301,12 @@ GC(JSContext* cx, unsigned argc, Value* vp)
         }
     }
 
+#ifndef OMR
+    // OMRTODO: Implement GC stats and usage
 #ifndef JS_MORE_DETERMINISTIC
     size_t preBytes = cx->runtime()->gc.usage.gcBytes();
 #endif
+#endif // OMR
 
     if (zone)
         PrepareForDebugGC(cx->runtime());
@@ -314,9 +317,11 @@ GC(JSContext* cx, unsigned argc, Value* vp)
     JS::GCForReason(cx, gckind, JS::gcreason::API);
 
     char buf[256] = { '\0' };
+#ifndef OMR
 #ifndef JS_MORE_DETERMINISTIC
     SprintfLiteral(buf, "before %" PRIuSIZE ", after %" PRIuSIZE "\n",
                    preBytes, cx->runtime()->gc.usage.gcBytes());
+#endif
 #endif
     JSString* str = JS_NewStringCopyZ(cx, buf);
     if (!str)
@@ -328,9 +333,13 @@ GC(JSContext* cx, unsigned argc, Value* vp)
 static bool
 MinorGC(JSContext* cx, unsigned argc, Value* vp)
 {
+
+    // OMRTODO: What does the store buffer overflow mean?
     CallArgs args = CallArgsFromVp(argc, vp);
+#ifndef OMR
     if (args.get(0) == BooleanValue(true))
         cx->runtime()->gc.storeBuffer.setAboutToOverflow();
+#endif // OMR
 
     cx->minorGC(JS::gcreason::API);
     args.rval().setUndefined();

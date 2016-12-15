@@ -290,6 +290,7 @@ const AllocKind gc::slotsToThingKind[] = {
 
 #endif // ! OMR Sizes
 
+#ifndef OMR // Arena
 template<>
 JSObject*
 ArenaCellIterImpl::get<JSObject>() const
@@ -309,6 +310,7 @@ Arena::finalize(FreeOp* fop, AllocKind thingKind, size_t thingSize)
 {
     return 0;
 }
+#endif // ! OMR  Arena
 
 #ifdef JS_GC_ZEAL
 
@@ -533,14 +535,18 @@ UpdateCellPointers(MovingTracer* trc, T* cell)
 {
 }
 
+#ifndef OMR // Arena
 template <typename T>
 static void
 UpdateArenaPointersTyped(MovingTracer* trc, Arena* arena, JS::TraceKind traceKind)
 {
 }
+#endif // ! OMR Arena
 
 namespace js {
 namespace gc {
+
+#ifndef OMR // Arena
 
 struct ArenaListSegment
 {
@@ -576,6 +582,8 @@ struct UpdatePointersTask : public GCParallelTask
     ~UpdatePointersTask() override { join(); }
 };
 
+#endif // ! OMR Arena
+
 } // namespace gc
 } // namespace js
 
@@ -606,10 +614,12 @@ static const size_t MaxCellUpdateBackgroundTasks = 8;
 // Since we want to minimize the number of phases, we put everything else into
 // the first phase and label it the 'misc' phase.
 
+#ifndef OMR // Arena
 void
 ReleaseArenaList(JSRuntime* rt, Arena* arena, const AutoLockGC& lock)
 {
 }
+#endif // ! OMR Arena
 
 SliceBudget::SliceBudget()
   : timeBudget(UnlimitedTimeBudget), workBudget(UnlimitedWorkBudget)
@@ -725,6 +735,7 @@ struct MaybeCompartmentFunctor {
 
 #ifdef JS_GC_ZEAL
 
+#ifndef OMR // Chunk
 struct GCChunkHasher {
     typedef gc::Chunk* Lookup;
 
@@ -743,6 +754,7 @@ struct GCChunkHasher {
         return k == l;
     }
 };
+#endif // ! OMR Chunk
 
 class js::gc::MarkingValidator
 {
@@ -945,12 +957,14 @@ SweepMiscTask::run()
 
 using WeakCacheTaskVector = mozilla::Vector<SweepWeakCacheTask, 0, SystemAllocPolicy>;
 
+#ifndef OMR // ArenaList
 template <typename T, typename... Args>
 static bool
 SweepArenaList(Arena** arenasToSweep, SliceBudget& sliceBudget, Args... args)
 {
     return true;
 }
+#endif // ! OMR ArenaList
 
 namespace {
 
@@ -1504,7 +1518,8 @@ AutoEmptyNursery::AutoEmptyNursery(JSRuntime *rt)
 // OMR GC Helper
 #ifdef OMR
 Zone* OmrGcHelper::zone;
-GCRuntime* OmrGcRuntime::runtime;
+GCRuntime* OmrGcHelper::runtime;
+JS::Zone* GCRuntime::systemZone; // OMRTODO: One static zone?! Are we crazy?
 #endif // OMR
 
 } /* namespace gc */

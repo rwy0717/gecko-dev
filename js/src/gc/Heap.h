@@ -172,7 +172,7 @@ struct Cell
 
     inline JSRuntime* runtimeFromMainThread() const;
     inline JS::shadow::Runtime* shadowRuntimeFromMainThread() const;
-    inline Zone* zone() const;
+    inline JS::Zone* zone() const;
 
     // Note: Unrestricted access to the runtime of a GC thing from an arbitrary
     // thread can easily lead to races. Use this method very carefully.
@@ -294,7 +294,7 @@ public:
         return thingSizes[size_t(kind)];
     }
 
-    static Zone* zone;
+    static JS::Zone* zone;
     static GCRuntime* runtime;
 };
 #endif // ! OMR Arena replacemnt helpers
@@ -548,14 +548,14 @@ Cell::runtimeFromAnyThread() const
 {
     return nullptr;
 }
-inline Zone*
+inline JS::Zone*
 Cell::zoneFromAnyThread() const
 {
     // OMRTODO: Proper zones
     return OmrGcHelper::zone;
 }
 
-inline Zone*
+inline JS::Zone*
 Cell::zone() const
 {
     // OMRTODO: Use multiple zones obtained from a thread context

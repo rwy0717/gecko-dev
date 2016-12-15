@@ -54,15 +54,13 @@ class GCRuntime
 {
   public:
     explicit GCRuntime(JSRuntime* rt)
-        : nursery(rt)
+        : nursery(rt),
 #ifndef OMR
-        , storeBuffer(rt, nursery)
+        storeBuffer(rt, nursery),
 #endif // OMR
-        , stats(rt)
-        , marker(rt)
-#ifndef OMR
-        , usage(nullptr)
-#endif // OMR
+        stats(rt),
+        marker(rt),
+        usage(nullptr)
         { }
     
     MOZ_MUST_USE bool init(uint32_t maxbytes, uint32_t maxNurseryBytes);
@@ -196,7 +194,7 @@ class GCRuntime
 
     /* Embedders can use this zone however they wish. */
 #ifdef OMR
-    // OMRTODO: Support muly7atiple runtimes and zones and do the right thing.
+    // OMRTODO: Support multiple runtimes and zones and do the right thing.
     static JS::Zone* systemZone;
 #else
     JS::Zone* systemZone;
@@ -215,10 +213,8 @@ class GCRuntime
 
     GCMarker marker;
 
-#ifndef OMR
     /* Track heap usage for this runtime. */
     HeapUsage usage;
-#endif // ! OMR
 
 	js::Mutex lock;
 	

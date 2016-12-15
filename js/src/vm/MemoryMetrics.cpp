@@ -289,6 +289,7 @@ struct StatsClosure
     }
 };
 
+#ifndef OMR // Chunk
 static void
 DecommittedArenasChunkCallback(JSRuntime* rt, void* data, gc::Chunk* chunk)
 {
@@ -304,6 +305,7 @@ DecommittedArenasChunkCallback(JSRuntime* rt, void* data, gc::Chunk* chunk)
     MOZ_ASSERT(n > 0);
     *static_cast<size_t*>(data) += n;
 }
+#endif // ! OMR Chunk
 
 static void
 StatsZoneCallback(JSRuntime* rt, void* data, Zone* zone)
@@ -360,6 +362,7 @@ StatsCompartmentCallback(JSContext* cx, void* data, JSCompartment* compartment)
                                         &cStats.privateData);
 }
 
+#ifndef OMR // Arena
 static void
 StatsArenaCallback(JSRuntime* rt, void* data, gc::Arena* arena,
                    JS::TraceKind traceKind, size_t thingSize)
@@ -377,6 +380,7 @@ StatsArenaCallback(JSRuntime* rt, void* data, gc::Arena* arena,
     // subtracting thingSize for every used cell, in StatsCellCallback().
     rtStats->currZoneStats->unusedGCThings.addToKind(traceKind, allocationSpace);
 }
+#endif // ! OMR Arena
 
 // FineGrained is used for normal memory reporting.  CoarseGrained is used by
 // AddSizeOfTab(), which aggregates all the measurements into a handful of
@@ -732,14 +736,13 @@ FindNotableScriptSources(JS::RuntimeSizes& runtime)
     return true;
 }
 
+#ifndef OMR // Stats
+// OMRTODO: Runtime stats collection
+
 static bool
 CollectRuntimeStatsHelper(JSContext* cx, RuntimeStats* rtStats, ObjectPrivateVisitor* opv,
                           bool anonymize, IterateCellCallback statsCellCallback)
 {
-#ifdef OMR
-    // OMRTODO: Runtime stats collection
-    return true;
-#else // OMR
     JSRuntime* rt = cx;
     if (!rtStats->compartmentStatsVector.reserve(rt->numCompartments))
         return false;
@@ -832,7 +835,6 @@ CollectRuntimeStatsHelper(JSContext* cx, RuntimeStats* rtStats, ObjectPrivateVis
                                   rtStats->zTotals.gcHeapArenaAdmin -
                                   rtStats->gcHeapGCThings;
     return true;
-#endif // OMR
 }
 
 JS_PUBLIC_API(bool)
@@ -841,6 +843,8 @@ JS::CollectRuntimeStats(JSContext* cx, RuntimeStats *rtStats, ObjectPrivateVisit
 {
     return CollectRuntimeStatsHelper(cx, rtStats, opv, anonymize, StatsCellCallback<FineGrained>);
 }
+
+#endif // OMR Stats
 
 JS_PUBLIC_API(size_t)
 JS::SystemCompartmentCount(JSContext* cx)
@@ -892,6 +896,8 @@ JS_PUBLIC_API(bool)
 AddSizeOfTab(JSContext* cx, HandleObject obj, MallocSizeOf mallocSizeOf, ObjectPrivateVisitor* opv,
              TabSizes* sizes)
 {
+#ifndef OMR // Stats
+    // OMRTODO: Stats collection / heap iteration
     SimpleJSRuntimeStats rtStats(mallocSizeOf);
 
     JS::Zone* zone = GetObjectZone(obj);
@@ -907,6 +913,7 @@ AddSizeOfTab(JSContext* cx, HandleObject obj, MallocSizeOf mallocSizeOf, ObjectP
     StatsClosure closure(&rtStats, opv, /* anonymize = */ false);
     if (!closure.init())
         return false;
+
     IterateZoneCompartmentsArenasCells(cx, zone, &closure,
                                        StatsZoneCallback,
                                        StatsCompartmentCallback,
@@ -924,7 +931,7 @@ AddSizeOfTab(JSContext* cx, HandleObject obj, MallocSizeOf mallocSizeOf, ObjectP
 
     rtStats.zTotals.addToTabSizes(sizes);
     rtStats.cTotals.addToTabSizes(sizes);
-
+#endif // ! OMR Stats
     return true;
 }
 
@@ -932,6 +939,8 @@ JS_PUBLIC_API(bool)
 AddServoSizeOf(JSContext* cx, MallocSizeOf mallocSizeOf, ObjectPrivateVisitor *opv,
                ServoSizes *sizes)
 {
+#ifndef OMR // Stats
+    // OMRTODO: Stat collection / heap iteration
     SimpleJSRuntimeStats rtStats(mallocSizeOf);
 
     // No need to anonymize because the results will be aggregated.
@@ -957,7 +966,7 @@ AddServoSizeOf(JSContext* cx, MallocSizeOf mallocSizeOf, ObjectPrivateVisitor *o
                          sizes->gcHeapDecommitted;
     MOZ_ASSERT(rtStats.gcHeapChunkTotal == gcHeapTotal - gcHeapTotalOriginal);
 #endif
-
+#endif // ! OMR Stats
     return true;
 }
 

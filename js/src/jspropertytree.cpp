@@ -154,6 +154,9 @@ PropertyTree::getChild(ExclusiveContext* cx, Shape* parentArg, Handle<StackShape
         /* If kidp->isNull(), we always insert. */
     }
 
+#ifndef OMR // Writebarrier
+    // OMRTODO: Writebarriers here
+    // OMRTODO: What is the property tree
     if (existingShape) {
         JS::Zone* zone = existingShape->zone();
         if (zone->needsIncrementalBarrier()) {
@@ -178,6 +181,7 @@ PropertyTree::getChild(ExclusiveContext* cx, Shape* parentArg, Handle<StackShape
             UnmarkGrayShapeRecursively(existingShape);
         }
     }
+#endif // ! OMR Writebarrier
 
     if (existingShape)
         return existingShape;

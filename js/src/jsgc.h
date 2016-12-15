@@ -447,6 +447,8 @@ IterateZoneCompartmentsArenasCells(JSContext* cx, Zone* zone, void* data,
 extern void
 IterateChunks(JSContext* cx, void* data, IterateChunkCallback chunkCallback);
 
+#endif // ! OMR GC Iterators
+
 typedef void (*IterateScriptCallback)(JSRuntime* rt, void* data, JSScript* script);
 
 /*
@@ -456,8 +458,6 @@ typedef void (*IterateScriptCallback)(JSRuntime* rt, void* data, JSScript* scrip
 extern void
 IterateScripts(JSContext* cx, JSCompartment* compartment,
                void* data, IterateScriptCallback scriptCallback);
-
-#endif // ! OMR GC Iterators
 
 extern void
 FinalizeStringRT(JSRuntime* rt, JSString* str);

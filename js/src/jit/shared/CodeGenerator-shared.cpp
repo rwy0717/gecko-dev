@@ -1054,7 +1054,12 @@ CodeGeneratorShared::verifyCompactTrackedOptimizationsMap(JitCode* code, uint32_
             // decoded. This is disabled for now if the types table might
             // contain nursery pointers, in which case the types might not
             // match, see bug 1175761.
+#ifdef OMR
+            // OMRTODO: Understand cancelIonCompilations and writebarriers
+            if (true) {
+#else
             if (!code->runtimeFromMainThread()->gc.storeBuffer.cancelIonCompilations()) {
+#endif
                 IonTrackedOptimizationsTypeInfo typeInfo = typesTable->entry(index);
                 TempOptimizationTypeInfoVector tvec(alloc());
                 ReadTempTypeInfoVectorOp top(alloc(), &tvec);
