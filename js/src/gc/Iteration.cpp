@@ -17,6 +17,8 @@
 using namespace js;
 using namespace js::gc;
 
+#ifndef OMR
+// OMRTODO: Heap iteration implemented
 void
 js::IterateZonesCompartmentsArenasCells(JSContext* cx, void* data,
                                         IterateZoneCallback zoneCallback,
@@ -45,3 +47,5 @@ js::IterateScripts(JSContext* cx, JSCompartment* compartment,
                    void* data, IterateScriptCallback scriptCallback)
 {
 }
+
+#endif // OMR

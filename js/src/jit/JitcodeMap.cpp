@@ -846,8 +846,13 @@ JitcodeGlobalEntry::BaseEntry::markJitcode(JSTracer* trc)
 bool
 JitcodeGlobalEntry::BaseEntry::isJitcodeMarkedFromAnyThread()
 {
+#ifdef OMR
+    // OMRTODO: Concurrent GC marking issues
+    return IsMarkedUnbarriered(&jitcode_);
+#else
     return IsMarkedUnbarriered(&jitcode_) ||
            jitcode_->arena()->allocatedDuringIncremental;
+#endif
 }
 
 bool
@@ -876,8 +881,13 @@ JitcodeGlobalEntry::BaselineEntry::sweepChildren()
 bool
 JitcodeGlobalEntry::BaselineEntry::isMarkedFromAnyThread()
 {
+#ifdef OMR
+    // OMRTODO: Concurrent GC marking issues
+    return IsMarkedUnbarriered(&jitcode_);
+#else
     return IsMarkedUnbarriered(&script_) ||
            script_->arena()->allocatedDuringIncremental;
+#endif
 }
 
 template <class ShouldMarkProvider>
@@ -921,6 +931,8 @@ JitcodeGlobalEntry::IonEntry::mark(JSTracer* trc)
 void
 JitcodeGlobalEntry::IonEntry::sweepChildren()
 {
+    // OMRTODO: JIT code object sweeping and the GC
+
     for (unsigned i = 0; i < numScripts(); i++)
         MOZ_ALWAYS_FALSE(IsAboutToBeFinalizedUnbarriered(&sizedScriptList()->pairs[i].script));
 
@@ -944,11 +956,19 @@ bool
 JitcodeGlobalEntry::IonEntry::isMarkedFromAnyThread()
 {
     for (unsigned i = 0; i < numScripts(); i++) {
+#ifdef OMR
+        // OMRTODO: Concurrent GC marking and the JIT
+        if (!IsMarkedUnbarriered(&sizedScriptList()->pairs[i].script))
+        {
+            return false;
+        }
+#else
         if (!IsMarkedUnbarriered(&sizedScriptList()->pairs[i].script) &&
             !sizedScriptList()->pairs[i].script->arena()->allocatedDuringIncremental)
         {
             return false;
         }
+#endif
     }
 
     if (!optsAllTypes_)

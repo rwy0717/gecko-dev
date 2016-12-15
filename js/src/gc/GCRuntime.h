@@ -49,10 +49,22 @@ struct Callback {
     {}
 };
 
+// OMRTODO: Disable or minimize the active GCRuntime code
 class GCRuntime
 {
   public:
-    explicit GCRuntime(JSRuntime* rt) : nursery(rt), storeBuffer(rt, nursery), stats(rt), marker(rt), usage(nullptr) {}
+    explicit GCRuntime(JSRuntime* rt)
+        : nursery(rt)
+#ifndef OMR
+        , storeBuffer(rt, nursery)
+#endif // OMR
+        , stats(rt)
+        , marker(rt)
+#ifndef OMR
+        , usage(nullptr)
+#endif // OMR
+        { }
+    
     MOZ_MUST_USE bool init(uint32_t maxbytes, uint32_t maxNurseryBytes);
 	void finishRoots() {}
     void finish();
@@ -144,7 +156,10 @@ class GCRuntime
 
     void setFullCompartmentChecks(bool enable);
 
-	JS::Zone* getCurrentZoneGroup() { return nullptr; }
+	JS::Zone* getCurrentZoneGroup() {
+        // OMRTODO: Implement and work with zones correctly
+         return systemZone;
+    }
 
     uint64_t gcNumber() const { return 0; }
 
@@ -180,21 +195,31 @@ class GCRuntime
     JSRuntime* rt;
 
     /* Embedders can use this zone however they wish. */
+#ifdef OMR
+    // OMRTODO: Support muly7atiple runtimes and zones and do the right thing.
+    static JS::Zone* systemZone;
+#else
     JS::Zone* systemZone;
+#endif // OMR
 
     /* List of compartments and zones (protected by the GC lock). */
     ZoneVector zones;
 
     Nursery nursery;
+
+#ifndef OMR // Writebariers
     StoreBuffer storeBuffer;
+#endif // ! OMR Writebarriers
 
     gcstats::Statistics stats;
 
     GCMarker marker;
 
+#ifndef OMR
     /* Track heap usage for this runtime. */
     HeapUsage usage;
-	
+#endif // ! OMR
+
 	js::Mutex lock;
 	
 	bool hasZealMode(ZealMode mode) { return false; }

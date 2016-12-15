@@ -263,12 +263,20 @@ class NewObjectCache
         entry->key = key;
         entry->kind = kind;
 
+#ifdef OMR
+        entries->nbytes = gc::OmrGcHelper::thingSize(kind);
+#else
         entry->nbytes = gc::Arena::thingSize(kind);
+#endif
         js_memcpy(&entry->templateObject, obj, entry->nbytes);
     }
 
     static void copyCachedToObject(NativeObject* dst, NativeObject* src, gc::AllocKind kind) {
+#ifdef OMR
+        js_memcpy(dst, src, gc::OmrGcHelper::thingSize(kind));
+#else
         js_memcpy(dst, src, gc::Arena::thingSize(kind));
+#endif
         Shape::writeBarrierPost(&dst->shape_, nullptr, dst->shape_);
         ObjectGroup::writeBarrierPost(&dst->group_, nullptr, dst->group_);
     }

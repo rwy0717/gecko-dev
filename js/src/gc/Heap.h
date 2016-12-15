@@ -172,16 +172,21 @@ struct Cell
 
     inline JSRuntime* runtimeFromMainThread() const;
     inline JS::shadow::Runtime* shadowRuntimeFromMainThread() const;
+    inline Zone* zone() const;
 
     // Note: Unrestricted access to the runtime of a GC thing from an arbitrary
     // thread can easily lead to races. Use this method very carefully.
     inline JSRuntime* runtimeFromAnyThread() const;
     inline JS::shadow::Runtime* shadowRuntimeFromAnyThread() const;
-
+#ifdef OMR
+        inline JS::Zone* zoneFromAnyThread() const;
+#endif // OMR
     // May be overridden by GC thing kinds that have a compartment pointer.
     inline JSCompartment* maybeCompartment() const { return nullptr; }
 
+#ifndef OMR // Writebarriers
     inline StoreBuffer* storeBuffer() const;
+#endif // ! OMR Writebarriers
 
     inline JS::TraceKind getTraceKind() const;
 
@@ -233,7 +238,9 @@ class TenuredCell : public Cell
 #ifndef OMR // Disable Arenas
     inline Arena* arena() const;
 #endif // ! OMR
+
     inline JS::TraceKind getTraceKind() const;
+
 #ifndef OMR // Disable Arenas
     inline JS::Zone* zone() const;
     inline JS::Zone* zoneFromAnyThread() const;
@@ -245,7 +252,7 @@ class TenuredCell : public Cell
     MOZ_ALWAYS_INLINE JS::shadow::Zone* shadowZoneFromAnyThread() const {
         return JS::shadow::Zone::asShadowZone(zoneFromAnyThread());
     }
-#endif // ! OMR
+#endif // ! OMR Arenas
 
     static MOZ_ALWAYS_INLINE void readBarrier(TenuredCell* thing);
     static MOZ_ALWAYS_INLINE void writeBarrierPre(TenuredCell* thing);
@@ -275,6 +282,22 @@ class FreeSpan
         return 0;
     }
 };
+
+#ifdef OMR // Arena replacement helpers
+// OMRTODO: Move to object model
+class OmrGcHelper {
+public:
+
+    static JS_FRIEND_DATA(const uint32_t) thingSizes[];
+
+    static size_t thingSize(AllocKind kind) {
+        return thingSizes[size_t(kind)];
+    }
+
+    static Zone* zone;
+    static GCRuntime* runtime;
+};
+#endif // ! OMR Arena replacemnt helpers
 
 #ifndef OMR // Arenas
 
@@ -464,6 +487,8 @@ struct Chunk
     Arena* fetchNextFreeArena(JSRuntime* rt);
 };
 
+#endif // ! OMR Arenas
+
 /*
  * Tracks the used sizes for owned heap data and automatically maintains the
  * memory usage relationship between GCRuntime and Zones.
@@ -476,6 +501,8 @@ class HeapUsage
 
     size_t gcBytes() const { return 0; }
 };
+
+#ifndef OMR // Arenas
 
 inline void
 Arena::checkAddress() const
@@ -502,7 +529,7 @@ Cell::asTenured()
     return *static_cast<TenuredCell*>(this);
 }
 
-#ifndef OMR // Disable getting Runtime without context
+// OMRTOO: Getting Runtime with context
 
 inline JSRuntime*
 Cell::runtimeFromMainThread() const
@@ -521,14 +548,25 @@ Cell::runtimeFromAnyThread() const
 {
     return nullptr;
 }
+inline Zone*
+Cell::zoneFromAnyThread() const
+{
+    // OMRTODO: Proper zones
+    return OmrGcHelper::zone;
+}
+
+inline Zone*
+Cell::zone() const
+{
+    // OMRTODO: Use multiple zones obtained from a thread context
+    return OmrGcHelper::zone;
+}
 
 inline JS::shadow::Runtime*
 Cell::shadowRuntimeFromAnyThread() const
 {
     return nullptr;
 }
-
-#endif // ! OMR
 
 inline uintptr_t
 Cell::address() const

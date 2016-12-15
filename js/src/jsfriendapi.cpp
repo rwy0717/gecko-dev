@@ -1133,6 +1133,8 @@ DumpHeapTracer::onChild(const JS::GCCellPtr& thing)
 void
 js::DumpHeap(JSContext* cx, FILE* fp, js::DumpHeapNurseryBehaviour nurseryBehaviour)
 {
+#ifndef OMR
+    // OMRTODO: Dump Heap
     if (nurseryBehaviour == js::CollectNurseryBeforeDump)
         cx->gc.evictNursery(JS::gcreason::API);
 
@@ -1151,7 +1153,7 @@ js::DumpHeap(JSContext* cx, FILE* fp, js::DumpHeapNurseryBehaviour nurseryBehavi
                                         DumpHeapVisitCompartment,
                                         DumpHeapVisitArena,
                                         DumpHeapVisitCell);
-
+#endif // OMR
     fflush(dtrc.output);
 }
 

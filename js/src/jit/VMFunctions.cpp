@@ -472,6 +472,8 @@ MallocWrapper(JSRuntime* rt, size_t nbytes)
 JSObject*
 NewCallObject(JSContext* cx, HandleShape shape, HandleObjectGroup group)
 {
+    // OMRTODO: What is a CallObject?
+
     JSObject* obj = CallObject::create(cx, shape, group);
     if (!obj)
         return nullptr;
@@ -479,9 +481,11 @@ NewCallObject(JSContext* cx, HandleShape shape, HandleObjectGroup group)
     // The JIT creates call objects in the nursery, so elides barriers for
     // the initializing writes. The interpreter, however, may have allocated
     // the call object tenured, so barrier as needed before re-entering.
+#ifndef OMR
+    // OMRTODO: Writebarrier here
     if (!IsInsideNursery(obj))
         cx->runtime()->gc.storeBuffer.putWholeCell(obj);
-
+#endif // OMR
     return obj;
 }
 
@@ -495,10 +499,13 @@ NewSingletonCallObject(JSContext* cx, HandleShape shape)
     // The JIT creates call objects in the nursery, so elides barriers for
     // the initializing writes. The interpreter, however, may have allocated
     // the call object tenured, so barrier as needed before re-entering.
-    //MOZ_ASSERT(!IsInsideNursery(obj),
-    //           "singletons are created in the tenured heap");
-    cx->runtime()->gc.storeBuffer.putWholeCell(obj);
+#ifndef OMR
+    MOZ_ASSERT(!IsInsideNursery(obj),
+               "singletons are created in the tenured heap");
 
+    // OMRTODO: Writebarrier here
+    cx->runtime()->gc.storeBuffer.putWholeCell(obj);
+#endif // OMR
     return obj;
 }
 
@@ -601,8 +608,11 @@ GetDynamicName(JSContext* cx, JSObject* envChain, JSString* str, Value* vp)
 void
 PostWriteBarrier(JSRuntime* rt, JSObject* obj)
 {
-    //MOZ_ASSERT(!IsInsideNursery(obj));
+#ifndef OMR
+    // OMRTODO: Writebarrier here
+    MOZ_ASSERT(!IsInsideNursery(obj));
     rt->gc.storeBuffer.putWholeCell(obj);
+#endif // OMR
 }
 
 static const size_t MAX_WHOLE_CELL_BUFFER_SIZE = 4096;
@@ -610,7 +620,8 @@ static const size_t MAX_WHOLE_CELL_BUFFER_SIZE = 4096;
 void
 PostWriteElementBarrier(JSRuntime* rt, JSObject* obj, int32_t index)
 {
-    //MOZ_ASSERT(!IsInsideNursery(obj));
+#ifndef OMR // Writebarrier
+    MOZ_ASSERT(!IsInsideNursery(obj));
     if (obj->is<NativeObject>() &&
         !obj->as<NativeObject>().isInWholeCellBuffer() &&
         uint32_t(index) < obj->as<NativeObject>().getDenseInitializedLength() &&
@@ -625,6 +636,7 @@ PostWriteElementBarrier(JSRuntime* rt, JSObject* obj, int32_t index)
     }
 
     rt->gc.storeBuffer.putWholeCell(obj);
+#endif // ! OMR Writebarrier
 }
 
 void

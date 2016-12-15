@@ -308,6 +308,7 @@ class JSObject : public js::gc::Cell
     static const size_t MaxTagBits = 3;
     static bool isNullLike(const JSObject* obj) { return uintptr_t(obj) < (1 << MaxTagBits); }
 
+#ifndef OMR // Zones
     MOZ_ALWAYS_INLINE JS::Zone* zone() const {
         return group_->zone();
     }
@@ -320,6 +321,8 @@ class JSObject : public js::gc::Cell
     MOZ_ALWAYS_INLINE JS::shadow::Zone* shadowZoneFromAnyThread() const {
         return JS::shadow::Zone::asShadowZone(zoneFromAnyThread());
     }
+#endif // ! OMR Zones
+
     static MOZ_ALWAYS_INLINE void readBarrier(JSObject* obj);
     static MOZ_ALWAYS_INLINE void writeBarrierPre(JSObject* obj);
     static MOZ_ALWAYS_INLINE void writeBarrierPost(void* cellp, JSObject* prev, JSObject* next);
@@ -328,8 +331,13 @@ class JSObject : public js::gc::Cell
     js::gc::AllocKind allocKindForTenure(const js::Nursery& nursery) const;
 
     size_t tenuredSizeOfThis() const {
+#ifdef OMR // Arenas
+        // OMRTODO: Obtain size correctly
+        return js::gc::OmrGcHelper::thingSize(getAllocKind());
+#else // OMR Arenas
         MOZ_ASSERT(isTenured());
         return js::gc::Arena::thingSize(asTenured().getAllocKind());
+#endif // ! OMR Arenas
     }
 
     void addSizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::ClassInfo* info);

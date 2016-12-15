@@ -52,8 +52,11 @@ Linker::newCode(JSContext* cx, CodeKind kind, bool hasPatchableBackedges /* = fa
     awjc.emplace(result, bytesNeeded);
     code->copyFrom(masm);
     masm.link(code);
+#ifndef OMR
+    // OMRTODO: Writebarriers here
     if (masm.embedsNurseryPointers())
         cx->runtime()->gc.storeBuffer.putWholeCell(code);
+#endif // OMR
     return code;
 }
 

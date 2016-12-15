@@ -244,6 +244,8 @@ GetGCKindBytes(AllocKind thingKind)
     return sizeof(JSObject_Slots0) + GetGCKindSlots(thingKind) * sizeof(Value);
 }
 
+#ifndef OMR // Arenas and segments
+
 // Class to assist in triggering background chunk allocation. This cannot be done
 // while holding the GC or worker thread state lock due to lock ordering issues.
 // As a result, the triggering is delayed using this class until neither of the
@@ -301,6 +303,8 @@ class ArenaLists
 		return nullptr;
 	}
 };
+
+#endif // ! OMR Arenas and segments
 
 } /* namespace gc */
 
@@ -405,6 +409,8 @@ class GCParallelTask
     virtual void runFromHelperThread(AutoLockHelperThreadState& locked);
 };
 
+#ifndef OMR // GC Iterators
+
 typedef void (*IterateChunkCallback)(JSRuntime* rt, void* data, gc::Chunk* chunk);
 typedef void (*IterateZoneCallback)(JSRuntime* rt, void* data, JS::Zone* zone);
 typedef void (*IterateArenaCallback)(JSRuntime* rt, void* data, gc::Arena* arena,
@@ -450,6 +456,8 @@ typedef void (*IterateScriptCallback)(JSRuntime* rt, void* data, JSScript* scrip
 extern void
 IterateScripts(JSContext* cx, JSCompartment* compartment,
                void* data, IterateScriptCallback scriptCallback);
+
+#endif // ! OMR GC Iterators
 
 extern void
 FinalizeStringRT(JSRuntime* rt, JSString* str);

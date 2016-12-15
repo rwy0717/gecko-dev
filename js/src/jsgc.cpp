@@ -261,6 +261,17 @@ const AllocKind gc::slotsToThingKind[] = {
     /* 16 */ AllocKind::OBJECT16
 };
 
+#ifdef OMR // Sizes
+
+ const uint32_t OmrGcHelper::thingSizes[] = {
+ #define EXPAND_THING_SIZE(allocKind, traceKind, type, sizedType) \
+     sizeof(sizedType),
+ FOR_EACH_ALLOCKIND(EXPAND_THING_SIZE)
+ #undef EXPAND_THING_SIZE
+ };
+
+#else // OMR Sizes
+
  const uint32_t Arena::ThingSizes[] = {
  #define EXPAND_THING_SIZE(allocKind, traceKind, type, sizedType) \
      sizeof(sizedType),
@@ -276,6 +287,8 @@ const AllocKind gc::slotsToThingKind[] = {
  FOR_EACH_ALLOCKIND(EXPAND_THINGS_PER_ARENA)
  #undef EXPAND_THINGS_PER_ARENA
  };
+
+#endif // ! OMR Sizes
 
 template<>
 JSObject*
@@ -1064,6 +1077,10 @@ js::NewCompartment(JSContext* cx, Zone* zone, JSPrincipals* principals,
 	if (!zone) {
 		JSRuntime* rt = cx->runtime();
 		zone = cx->new_<Zone>(rt);
+#ifdef OMR
+        // OMRTODO: Use multiple zones from a context correctly.
+        OmrGcHelper::zone = zone;
+#endif
 	}
 	ScopedJSDeletePtr<JSCompartment> compartment(cx->new_<JSCompartment>(zone, options));
 	compartment->init(cx);
@@ -1483,6 +1500,12 @@ AutoAssertEmptyNursery::checkCondition(JSRuntime *rt) {
 AutoEmptyNursery::AutoEmptyNursery(JSRuntime *rt)
 {
 }
+
+// OMR GC Helper
+#ifdef OMR
+Zone* OmrGcHelper::zone;
+GCRuntime* OmrGcRuntime::runtime;
+#endif // OMR
 
 } /* namespace gc */
 } /* namespace js */

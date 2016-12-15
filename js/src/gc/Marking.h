@@ -26,7 +26,9 @@ class NativeObject;
 class ObjectGroup;
 class WeakMapBase;
 namespace gc {
+#ifndef OMR // Arena
 class Arena;
+#endif // ! OMR Arena
 } // namespace gc
 namespace jit {
 class JitCode;

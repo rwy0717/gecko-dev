@@ -2202,8 +2202,12 @@ IonCompile(JSContext* cx, JSScript* script,
     if (!builder)
         return AbortReason_Alloc;
 
+#ifdef OMR // JIT/GC
+    // OMRTODO: GC / JIT compilation safepoints
+#else // OMR JIT/GC
     if (cx->runtime()->gc.storeBuffer.cancelIonCompilations())
         builder->setNotSafeForMinorGC();
+#endif // OMR JIT/GC
 
     MOZ_ASSERT(recompile == builder->script()->hasIonScript());
     MOZ_ASSERT(builder->script()->canIonCompile());

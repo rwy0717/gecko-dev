@@ -736,6 +736,10 @@ static bool
 CollectRuntimeStatsHelper(JSContext* cx, RuntimeStats* rtStats, ObjectPrivateVisitor* opv,
                           bool anonymize, IterateCellCallback statsCellCallback)
 {
+#ifdef OMR
+    // OMRTODO: Runtime stats collection
+    return true;
+#else // OMR
     JSRuntime* rt = cx;
     if (!rtStats->compartmentStatsVector.reserve(rt->numCompartments))
         return false;
@@ -828,6 +832,7 @@ CollectRuntimeStatsHelper(JSContext* cx, RuntimeStats* rtStats, ObjectPrivateVis
                                   rtStats->zTotals.gcHeapArenaAdmin -
                                   rtStats->gcHeapGCThings;
     return true;
+#endif // OMR
 }
 
 JS_PUBLIC_API(bool)

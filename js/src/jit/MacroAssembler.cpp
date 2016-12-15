@@ -767,6 +767,10 @@ void
 MacroAssembler::nurseryAllocate(Register result, Register temp, gc::AllocKind allocKind,
                                 size_t nDynamicSlots, gc::InitialHeap initialHeap, Label* fail)
 {
+#ifdef OMR // Allocate
+    MOZ_ASSERT(0);
+    // OMRTODO: Use OMR allocators and TLHs
+#else // OMR Allocate
     MOZ_ASSERT(IsNurseryAllocable(allocKind));
     MOZ_ASSERT(initialHeap != gc::TenuredHeap);
 
@@ -794,12 +798,17 @@ MacroAssembler::nurseryAllocate(Register result, Register temp, gc::AllocKind al
         computeEffectiveAddress(Address(result, thingSize), temp);
         storePtr(temp, Address(result, NativeObject::offsetOfSlots()));
     }
+#endif // ! OMR Allocate
 }
 
 // Inlined version of FreeSpan::allocate. This does not fill in slots_.
 void
 MacroAssembler::freeListAllocate(Register result, Register temp, gc::AllocKind allocKind, Label* fail)
 {
+#ifdef OMR // Allocate
+    // OMRTODO: Allocate in the JIT
+    MOZ_ASSERT(0);
+#else // OMR Allocate
     CompileZone* zone = GetJitContext()->compartment->zone();
     int thingSize = int(gc::Arena::thingSize(allocKind));
 
@@ -835,6 +844,7 @@ MacroAssembler::freeListAllocate(Register result, Register temp, gc::AllocKind a
     Pop(result);
 
     bind(&success);
+#endif // ! OMR Allocate
 }
 
 void

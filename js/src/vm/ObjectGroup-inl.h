@@ -16,7 +16,14 @@ ObjectGroup::needsSweep()
 {
     // Note: this can be called off thread during compacting GCs, in which case
     // nothing will be running on the main thread.
+#ifdef OMR
+    // OMRTODO: Why are objects compacted on a group basis? What is an object group?
+    // We should never call this.
+    MOZ_ASSERT(0);
+    return false;
+#else
     return generation() != zoneFromAnyThread()->types.generation;
+#endif
 }
 
 inline void
