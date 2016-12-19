@@ -89,7 +89,7 @@ class CompartmentChecker
         // OMRTODO: Obtain zone from context
         // OMRTODO: What is checkZone, anyways?
         if (!str->isAtom()) {
-            checkZone(gc::GCRuntime::systemZone);
+            checkZone(gc::OmrGcHelper::zone);
         }
 #else // OMR
         if (!str->isAtom())

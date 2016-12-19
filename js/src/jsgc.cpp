@@ -1092,6 +1092,7 @@ js::NewCompartment(JSContext* cx, Zone* zone, JSPrincipals* principals,
 		JSRuntime* rt = cx->runtime();
 		zone = cx->new_<Zone>(rt);
 #ifdef OMR
+        fprintf(stderr, "** New zone %p\n", zone);
         // OMRTODO: Use multiple zones from a context correctly.
         OmrGcHelper::zone = zone;
 #endif
@@ -1431,7 +1432,8 @@ NewMemoryInfoObject(JSContext* cx)
     if (!obj)
         return nullptr;
 
-    /*using namespace MemInfo;
+#ifndef OMR
+    using namespace MemInfo;
     struct NamedGetter {
         const char* name;
         JSNative getter;
@@ -1492,7 +1494,8 @@ NewMemoryInfoObject(JSContext* cx)
         {
             return nullptr;
         }
-    }*/
+    }
+#endif // ! OMR
 	return obj;
 }
 
@@ -1519,7 +1522,6 @@ AutoEmptyNursery::AutoEmptyNursery(JSRuntime *rt)
 #ifdef OMR
 Zone* OmrGcHelper::zone;
 GCRuntime* OmrGcHelper::runtime;
-JS::Zone* GCRuntime::systemZone; // OMRTODO: One static zone?! Are we crazy?
 #endif // OMR
 
 } /* namespace gc */

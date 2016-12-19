@@ -233,7 +233,7 @@ class WeakMap : public HashMap<Key, Value, HashPolicy, RuntimeAllocPolicy>,
 
 #ifdef OMR // Zone
         // OMRTODO: Get a real zone from a context passed through.
-        Zone* zone = gc::GCRuntime::systemZone; // use a single global zone
+        Zone* zone = gc::OmrGcHelper::zone; // use a single global zone
 #else // OMR Zone
         Zone* zone = key.asCell()->asTenured().zone();
 #endif // ! OMR Zone

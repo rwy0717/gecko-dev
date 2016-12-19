@@ -193,12 +193,7 @@ class GCRuntime
     JSRuntime* rt;
 
     /* Embedders can use this zone however they wish. */
-#ifdef OMR
-    // OMRTODO: Support multiple runtimes and zones and do the right thing.
-    static JS::Zone* systemZone;
-#else
     JS::Zone* systemZone;
-#endif // OMR
 
     /* List of compartments and zones (protected by the GC lock). */
     ZoneVector zones;
