@@ -118,13 +118,13 @@ class Nursery
     JSObject* allocateObject(JSContext* cx, size_t size, size_t numDynamic, const js::Class* clasp);
 
     /* Allocate a buffer for a given zone, using the nursery if possible. */
-    void* allocateBuffer(JS::Zone* zone, uint32_t nbytes) { return OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, nbytes, 0); }
+    void* allocateBuffer(JS::Zone* zone, uint32_t nbytes) { return OMR_GC_Allocate(Nursery::omrVMThread, 0, nbytes, 0); }
 
     /*
      * Allocate a buffer for a given object, using the nursery if possible and
      * obj is in the nursery.
      */
-    void* allocateBuffer(JSObject* obj, uint32_t nbytes) { return OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, nbytes, 0); }
+    void* allocateBuffer(JSObject* obj, uint32_t nbytes) { return OMR_GC_Allocate(Nursery::omrVMThread, 0, nbytes, 0); }
 
     /* Free an object buffer. */
     void freeBuffer(void* buffer) {}

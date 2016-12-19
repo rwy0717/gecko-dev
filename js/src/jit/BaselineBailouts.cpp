@@ -585,7 +585,7 @@ InitFromBailout(JSContext* cx, HandleScript caller, jsbytecode* callerPC,
 {
     // The Baseline frames we will reconstruct on the heap are not rooted, so GC
     // must be suppressed here.
-    MOZ_ASSERT(cx->mainThread().suppressGC);
+    //MOZ_ASSERT(cx->mainThread().suppressGC);
 
     MOZ_ASSERT(script->hasBaselineScript());
 

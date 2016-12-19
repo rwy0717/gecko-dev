@@ -162,7 +162,7 @@ struct Cell
 {
   public:
 	static Arena* arena;
-  typedef uintptr_t Flags;
+    typedef uintptr_t Flags;
 
   public:
     MOZ_ALWAYS_INLINE bool isTenured() const { return !IsInsideNursery(this); }

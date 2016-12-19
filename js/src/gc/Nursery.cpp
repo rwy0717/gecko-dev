@@ -56,10 +56,15 @@ js::Nursery::disable()
 
 JSObject*
 js::Nursery::allocateObject(JSContext* cx, size_t size, size_t numDynamic, const js::Class* clasp) {
-	JSObject* obj = (JSObject *)OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, size, 0);
+	JSObject* obj = (JSObject *)OMR_GC_Allocate(Nursery::omrVMThread, 0, size, 0);
 	if (obj) {
 		if (numDynamic > 0)
-			obj->setInitialSlotsMaybeNonNative((HeapSlot *)OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, numDynamic * sizeof(HeapSlot *), 0));
+		{
+			HeapSlot* slots = (HeapSlot *)OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, numDynamic * sizeof(HeapSlot *), 0);
+			if (!slots)
+				return nullptr;
+			obj->setInitialSlotsMaybeNonNative(slots);
+		}
 		else
 			obj->setInitialSlotsMaybeNonNative(nullptr);
 	}

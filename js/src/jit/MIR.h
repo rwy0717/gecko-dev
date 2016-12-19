@@ -1047,8 +1047,8 @@ class CompilerGCPointer
     {
         //MOZ_ASSERT_IF(IsInsideNursery(ptr), IonCompilationCanUseNurseryPointers());
 #ifdef DEBUG
-        PerThreadData* pt = TlsPerThreadData.get();
-        MOZ_ASSERT_IF(pt->runtimeIfOnOwnerThread(), pt->suppressGC);
+        //PerThreadData* pt = TlsPerThreadData.get();
+        //MOZ_ASSERT_IF(pt->runtimeIfOnOwnerThread(), pt->suppressGC);
 #endif
     }
 

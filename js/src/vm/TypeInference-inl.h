@@ -551,7 +551,7 @@ TypeScript::BytecodeTypes(JSScript* script, jsbytecode* pc, uint32_t* bytecodeMa
 /* static */ inline StackTypeSet*
 TypeScript::BytecodeTypes(JSScript* script, jsbytecode* pc)
 {
-    MOZ_ASSERT(CurrentThreadCanAccessRuntime(script->runtimeFromMainThread()));
+    //MOZ_ASSERT(CurrentThreadCanAccessRuntime(script->runtimeFromMainThread()));
     TypeScript* types = script->types();
     if (!types)
         return nullptr;
