@@ -42,15 +42,11 @@ template <typename T, AllowGC allowGC /* = CanGC */>
 JSObject*
 js::Allocate(ExclusiveContext* cx, gc::AllocKind kind, size_t nDynamicSlots, gc::InitialHeap heap,
          const Class* clasp) {
-#ifdef OMR
-	return nullptr;
-#else
 	JSContext* ncx = cx->asJSContext();
 	JSRuntime* rt = ncx->runtime();
 	JSObject* obj = rt->gc.nursery.allocateObject(ncx, Arena::thingSize(kind), nDynamicSlots, clasp);
 	obj->flags_ = (int)kind;
 	return obj;
-#endif // OMR
 }
 
 #define DECL_ALLOCATOR_INSTANCES(allocKind, traceKind, type, sizedType) \
