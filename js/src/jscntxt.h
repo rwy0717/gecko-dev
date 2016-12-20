@@ -170,8 +170,8 @@ class ExclusiveContext : public ContextFriendFields,
 
     template <typename T>
     bool isInsideCurrentZone(T thing) const {
-        // TODO: Can't access zone from thing.
-        // return thing->zoneFromAnyThread() == zone_;
+        // OMRTODO: Can't access zone from thing.
+        return thing->zoneFromAnyThread() == zone_;
     }
 
     template <typename T>
