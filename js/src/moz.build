@@ -660,9 +660,15 @@ USE_LIBS += [
 ]
 
 OS_LIBS += [
-    'dl $(topsrcdir)/js/src/omr/lib/libomrstatic.a',
-    'iconv'
+    'dl $(topsrcdir)/js/src/omr/lib/libomrstatic.a'
 ]
+# OMRTODO: add a CONFIG field to test if we are using OMR, wrap this part in a
+# test for that flag.
+# OMR requires libiconv on OSX.
+if CONFIG['OS_ARCH'] == 'Darwin':
+    OS_LIBS += [
+        'iconv'
+    ]
 
 if CONFIG['NIGHTLY_BUILD']:
     DEFINES['ENABLE_BINARYDATA'] = True
