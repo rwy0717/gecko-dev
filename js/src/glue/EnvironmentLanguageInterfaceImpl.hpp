@@ -44,6 +44,51 @@ public:
 
 	static MM_EnvironmentLanguageInterfaceImpl *getInterface(MM_EnvironmentLanguageInterface *linterface) { return (MM_EnvironmentLanguageInterfaceImpl *)linterface; }
 
+	/**
+	 * Acquire exclusive VM access. This must lock the VM thread list mutex (OMR_VM::_vmThreadListMutex).
+	 *
+	 * This method may be called by a thread that already holds exclusive VM access. In that case, the
+	 * OMR_VMThread::exclusiveCount counter is incremented (without reacquiring lock on VM thread list
+	 * mutex).
+	 */
+	virtual void
+	acquireExclusiveVMAccess()
+	{
+		if (0 == _omrThread->exclusiveCount) {
+			omrthread_monitor_enter(_env->getOmrVM()->_vmThreadListMutex);
+		}
+		_omrThread->exclusiveCount += 1;
+	}
+
+	/**
+	 * Try and acquire exclusive access if no other thread is already requesting it.
+	 * Make an attempt at acquiring exclusive access if the current thread does not already have it.  The
+	 * attempt will abort if another thread is already going for exclusive, which means this
+	 * call can return without exclusive access being held.  As well, this call will block for any other
+	 * requesting thread, and so should be treated as a safe point.
+	 * @note call can release VM access.
+	 * @return true if exclusive access was acquired, false otherwise.
+	 */
+	virtual bool
+	tryAcquireExclusiveVMAccess()
+	{
+		this->acquireExclusiveVMAccess();
+		return true;
+	}
+
+	/**
+	 * Releases exclusive VM access.
+	 */
+	virtual void
+	releaseExclusiveVMAccess()
+	{
+		Assert_MM_true(0 < _omrThread->exclusiveCount);
+		_omrThread->exclusiveCount -= 1;
+		if (0 == _omrThread->exclusiveCount) {
+			omrthread_monitor_exit(_env->getOmrVM()->_vmThreadListMutex);
+		}
+	}
+
 #if defined (OMR_GC_THREAD_LOCAL_HEAP)
 	virtual void disableInlineTLHAllocate();
 	virtual void enableInlineTLHAllocate();
