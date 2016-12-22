@@ -19,8 +19,6 @@
 #if !defined(OBJECTDESCRIPTION_H_)
 #define OBJECTDESCRIPTION_H_
 
-#include <cstdint>
-
 #include "omr.h"
 
 /**

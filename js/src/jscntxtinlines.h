@@ -85,7 +85,6 @@ class CompartmentChecker
 
     void check(JSString* str) {
 #ifdef OMR
-        MOZ_ASSERT(!str->isMarked(gc::GRAY));
         // OMRTODO: Obtain zone from context
         // OMRTODO: What is checkZone, anyways?
         if (!str->isAtom()) {

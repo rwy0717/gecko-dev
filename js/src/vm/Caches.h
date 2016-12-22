@@ -264,7 +264,7 @@ class NewObjectCache
         entry->kind = kind;
 
 #ifdef OMR
-        entries->nbytes = gc::OmrGcHelper::thingSize(kind);
+        entry->nbytes = gc::OmrGcHelper::thingSize(kind);
 #else
         entry->nbytes = gc::Arena::thingSize(kind);
 #endif
