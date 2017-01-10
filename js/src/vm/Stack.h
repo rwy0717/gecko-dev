@@ -25,6 +25,8 @@
 #include "js/RootingAPI.h"
 #include "vm/SavedFrame.h"
 
+#include "glue/omrglue.hpp"
+
 struct JSCompartment;
 
 namespace JS {
@@ -781,6 +783,7 @@ class InterpreterFrame
     }
 
   public:
+    void mark(omr::gc::Env* env, omr::gc::MarkingScheme* ms, Value* sp, jsbytecode* pc);
     void trace(JSTracer* trc, Value* sp, jsbytecode* pc);
     void traceValues(JSTracer* trc, unsigned start, unsigned end);
 

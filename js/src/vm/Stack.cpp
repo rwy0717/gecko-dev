@@ -23,6 +23,8 @@
 #include "vm/Interpreter-inl.h"
 #include "vm/Probes-inl.h"
 
+#include "glue/omrglue.hpp"
+
 using namespace js;
 
 using mozilla::Maybe;
@@ -346,6 +348,61 @@ InterpreterFrame::recreateLexicalEnvironment(JSContext* cx)
 
     replaceInnermostEnvironment(*fresh);
     return true;
+}
+
+void
+InterpreterFrame::mark(omr::gc::Env* env, omr::gc::MarkingScheme* ms, Value* sp, jsbytecode* pc)
+{
+    ms->markObject(env, envChain_);
+    ms->markObject(script_);
+
+    if (flags_ & HAS_ARGS_OBJ) {
+        ms->markObject(env, argsObj_);
+    }
+
+    if (hasReturnValue())
+        ms->markObject(env, rval_, "rval");
+
+    MOZ_ASSERT(sp >= slots());
+
+    if (hasArgs()) {
+        // Trace the callee and |this|. When we're doing a moving GC, we
+        // need to fix up the callee pointer before we use it below, under
+        // numFormalArgs() and script().
+        markRange(ms, env, 2, argv_ - 2);
+
+        // Trace arguments.
+        unsigned argc = Max(numActualArgs(), numFormalArgs());
+        markRange(env, ms, argc + isConstructing(), argv_);
+    } else {
+        // Mark newTarget.
+        ms->markObject(env, ((Value*)this) - 1, "stack newTarget");
+    }
+
+    JSScript* script = this->script();
+    size_t nfixed = script->nfixed();
+    size_t nlivefixed = script->calculateLiveFixed(pc);
+
+    if (nfixed == nlivefixed) {
+        // All locals are live.
+        markRange(env, ms, 0, sp - slots());
+    } else {
+        // Mark operand stack.
+        markRange(env, ms, nfixed, sp - slots());
+
+        // Clear dead block-scoped locals.
+        while (nfixed > nlivefixed)
+            unaliasedLocal(--nfixed).setUndefined();
+
+        // Mark live locals.
+        markRange(env, ms, 0, nlivefixed);
+    }
+
+    if (script->compartment()->debugEnvs)
+        script->compartment()->debugEnvs->markLiveFrame(env, ms, this);
+
+    if (trc->isMarkingTracer())
+        script->compartment()->zone()->active = true;
 }
 
 void

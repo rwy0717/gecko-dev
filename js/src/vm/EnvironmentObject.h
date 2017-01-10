@@ -19,6 +19,8 @@
 #include "vm/ProxyObject.h"
 #include "vm/Scope.h"
 
+#include "glue/omrglue.hpp"
+
 namespace js {
 
 class ModuleObject;
@@ -934,6 +936,7 @@ class DebugEnvironments
     // If a live frame has a synthesized entry in missingEnvs, make sure it's not
     // collected.
     void markLiveFrame(JSTracer* trc, AbstractFramePtr frame);
+    void markLiveFrame(omr::gc::Env* env, omr::gc::MarkingScheme* ms, AbstractFramePtr frame);
 
     static DebugEnvironmentProxy* hasDebugEnvironment(JSContext* cx, EnvironmentObject& env);
     static bool addDebugEnvironment(JSContext* cx, Handle<EnvironmentObject*> env,
