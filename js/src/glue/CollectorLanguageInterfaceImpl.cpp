@@ -194,6 +194,12 @@ using mozilla::IsSame;
 using mozilla::MakeRange;
 using mozilla::PodCopy;
 
+OMRGCMarker::OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env, MM_MarkingScheme* ms)
+	: JSTracer(rt, JSTracer::TracerKindTag::Marking, ExpandWeakMaps),
+	  env_(env),
+	  ms_(ms) {
+}
+
 template <typename T> void OMRGCMarker::traverse(T thing) { assert(0); }
 template <> void OMRGCMarker::traverse(BaseShape* thing) { mark(thing); }
 template <> void OMRGCMarker::traverse(JS::Symbol* thing) { mark(thing); }

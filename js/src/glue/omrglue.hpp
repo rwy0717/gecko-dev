@@ -20,6 +20,10 @@
 #include "js/TracingAPI.h"
 #include "vm/TaggedProto.h"
 
+// OMR
+#include "omr/gc/base/MarkingScheme.hpp"
+#include "omr/gc/base/EnvironmentBase.hpp"
+
 class JSLinearString;
 class JSRope;
 namespace js {
@@ -45,12 +49,7 @@ using namespace JS;
 class OMRGCMarker : public JSTracer
 {
 public:
-    explicit OMRGCMarker(JSRuntime* rt);
-    MOZ_MUST_USE bool init(JSGCMode gcMode);
-
-    void start();
-    void stop();
-    void reset();
+    explicit OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env, MM_MarkingScheme* ms);
 
     // Mark the given GC thing and traverse its children at some point.
     template <typename T> void traverse(T thing);
@@ -63,11 +62,13 @@ public:
     template <typename T> void noteWeakEdge(T* edge);
 
     static OMRGCMarker* fromTracer(JSTracer* trc) {
-        // MOZ_ASSERT(trc->isMarkingTracer());
         return static_cast<OMRGCMarker*>(trc);
     }
 
 private:
+    MM_EnvironmentBase* env_;
+    MM_MarkingScheme* ms_;
+
     // We may not have concrete types yet, so this has to be outside the header.
     template <typename T>
     void dispatchToTraceChildren(T* thing);
