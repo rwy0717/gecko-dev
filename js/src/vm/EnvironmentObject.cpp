@@ -2804,17 +2804,6 @@ DebugEnvironments::forwardLiveFrame(JSContext* cx, AbstractFramePtr from, Abstra
     }
 }
 
-
-/* static */ void
-DebugEnvironments::markLiveFrame(omr::gc::Env* env, omr::gc::MarkingScheme* ms, AbstractFramePtr frame)
-{
-    for (MissingEnvironmentMap::Enum e(missingEnvs); !e.empty(); e.popFront()) {
-        if (e.front().key().frame() == frame) {
-            ms->markObject(env, e.front().value());
-        }
-    }
-}
-
 /* static */ void
 DebugEnvironments::markLiveFrame(JSTracer* trc, AbstractFramePtr frame)
 {
