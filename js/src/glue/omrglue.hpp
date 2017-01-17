@@ -1,6 +1,8 @@
 #if!defined(OMRGLUE_HPP_)
 #define OMRGLUE_HPP_
 
+#include <iostream>
+
 #include "CollectorLanguageInterfaceImpl.hpp"
 #include "MarkingScheme.hpp"
 
@@ -51,6 +53,12 @@ class OMRGCMarker : public JSTracer
 public:
     explicit OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env, MM_MarkingScheme* ms);
 
+    template <typename T>
+    bool mark(T* thing) {
+        std::cout << "** (" << env_ << ") marking: " << thing << std::endl;
+        return ms_->markObject(env_, (omrobjectptr_t)thing);
+    }
+
     // Mark the given GC thing and traverse its children at some point.
     template <typename T> void traverse(T thing);
 
@@ -68,15 +76,6 @@ public:
 private:
     MM_EnvironmentBase* env_;
     MM_MarkingScheme* ms_;
-
-    // We may not have concrete types yet, so this has to be outside the header.
-    template <typename T>
-    void dispatchToTraceChildren(T* thing);
-
-    // Mark the given GC thing, but do not trace its children. Return true
-    // if the thing became marked.
-    template <typename T>
-    bool mark(T* thing);
 
 };
 
