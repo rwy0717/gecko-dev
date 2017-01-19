@@ -370,6 +370,9 @@ static const uint64_t JIT_SCRIPT_RELEASE_TYPES_PERIOD = 20;
 bool
 GCRuntime::init(uint32_t maxbytes, uint32_t maxNurseryBytes)
 {
+	if (!rootsHash.init(256))
+		return false;
+
     return true;
 }
 
@@ -465,20 +468,55 @@ GCRuntime::removeWeakPointerCompartmentCallback(JSWeakPointerCompartmentCallback
 {
 }
 
+bool
+GCRuntime::addRoot(Value* vp, const char* name)
+{
+	return rootsHash.put(vp, name);
+}
+
+void
+GCRuntime::removeRoot(Value* vp)
+{
+    rootsHash.remove(vp);
+}
+
 extern JS_FRIEND_API(bool)
 js::AddRawValueRoot(JSContext* cx, Value* vp, const char* name)
 {
-    return true;
+    return cx->runtime()->gc.addRoot(vp, name);;
 }
 
 extern JS_FRIEND_API(void)
 js::RemoveRawValueRoot(JSContext* cx, Value* vp)
 {
+	cx->runtime()->gc.removeRoot(vp);
 }
 
 void
 GCRuntime::updateMallocCounter(JS::Zone* zone, size_t nbytes)
 {
+}
+
+void
+GCMarker::delayMarkingArena(/*Arena* arena*/)
+{
+    /*if (arena->hasDelayedMarking) {
+        // Arena already scheduled to be marked later
+        return;
+    }
+    arena->setNextDelayedMarking(unmarkedArenaStackTop);
+    unmarkedArenaStackTop = arena;
+#ifdef DEBUG
+    markLaterArenas++;
+#endif*/
+}
+
+void
+GCMarker::delayMarkingChildren(const void* thing)
+{
+    /*const TenuredCell* cell = TenuredCell::fromPointer(thing);
+    cell->arena()->markOverflow = 1;
+    delayMarkingArena(cell->arena());*/
 }
 
 AutoDisableCompactingGC::AutoDisableCompactingGC(JSContext* cx)
@@ -1082,6 +1120,7 @@ js::gc::FinishGC(JSContext* cx)
 
 AutoPrepareForTracing::AutoPrepareForTracing(JSContext* cx, ZoneSelector selector)
 {
+    session_.emplace(cx);
 }
 
 JSCompartment*

@@ -58,6 +58,56 @@ class JitCode;
 } // namespace jit
 } // namespace js
 
+// Expand the given macro D for each valid GC reference type.
+#define FOR_EACH_INTERNAL_GC_POINTER_TYPE(D) \
+    D(JSFlatString*) \
+    D(JSLinearString*) \
+    D(js::AccessorShape*) \
+    D(js::ArgumentsObject*) \
+    D(js::ArrayBufferObject*) \
+    D(js::ArrayBufferObjectMaybeShared*) \
+    D(js::ArrayBufferViewObject*) \
+    D(js::ArrayObject*) \
+    D(js::BaseShape*) \
+    D(js::DebugEnvironmentProxy*) \
+    D(js::DebuggerFrame*) \
+    D(js::ExportEntryObject*) \
+    D(js::EnvironmentObject*) \
+    D(js::GlobalObject*) \
+    D(js::ImportEntryObject*) \
+    D(js::LazyScript*) \
+    D(js::LexicalEnvironmentObject*) \
+    D(js::ModuleEnvironmentObject*) \
+    D(js::ModuleNamespaceObject*) \
+    D(js::ModuleObject*) \
+    D(js::NativeObject*) \
+    D(js::ObjectGroup*) \
+    D(js::PlainObject*) \
+    D(js::PropertyName*) \
+    D(js::RegExpObject*) \
+    D(js::SavedFrame*) \
+    D(js::Scope*) \
+    D(js::ScriptSourceObject*) \
+    D(js::Shape*) \
+    D(js::SharedArrayBufferObject*) \
+    D(js::StructTypeDescr*) \
+    D(js::UnownedBaseShape*) \
+    D(js::WasmInstanceObject*) \
+    D(js::WasmMemoryObject*) \
+    D(js::WasmTableObject*) \
+    D(js::jit::JitCode*)
+
+// Expand the given macro D for each internal tagged GC pointer type.
+#define FOR_EACH_INTERNAL_TAGGED_GC_POINTER_TYPE(D) \
+    D(js::TaggedProto)
+
+// Expand the macro D for every GC reference type that we know about.
+#define FOR_EACH_GC_POINTER_TYPE(D) \
+    FOR_EACH_PUBLIC_GC_POINTER_TYPE(D) \
+    FOR_EACH_PUBLIC_TAGGED_GC_POINTER_TYPE(D) \
+    FOR_EACH_INTERNAL_GC_POINTER_TYPE(D) \
+    FOR_EACH_INTERNAL_TAGGED_GC_POINTER_TYPE(D)
+
 namespace JS {
 
 template <typename T>

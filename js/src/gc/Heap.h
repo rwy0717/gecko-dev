@@ -43,6 +43,10 @@ namespace js {
 class AutoLockGC;
 class FreeOp;
 
+// The return value indicates if anything was unmarked.
+extern bool
+UnmarkGrayCellRecursively(gc::Cell* cell, JS::TraceKind kind);
+
 extern void
 TraceManuallyBarrieredGenericPointerEdge(JSTracer* trc, gc::Cell** thingp, const char* name);
 

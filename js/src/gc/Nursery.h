@@ -57,8 +57,8 @@ class TenuringTracer : public JSTracer
   public:
 
     // Returns true if the pointer was updated.
-    template <typename T> void traverse(T** thingp) {}
-    template <typename T> void traverse(T* thingp) {}
+    template <typename T> void traverse(T** thingp);
+    template <typename T> void traverse(T* thingp);
 
     // The store buffers need to be able to call these directly.
     void traceObject(JSObject* src) {}

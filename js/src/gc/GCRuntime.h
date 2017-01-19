@@ -49,12 +49,17 @@ struct Callback {
     {}
 };
 
-// OMRTODO: Disable or minimize the active GCRuntime code
+template<typename F>
+using CallbackVector = Vector<Callback<F>, 4, SystemAllocPolicy>;
+
+typedef HashMap<Value*, const char*, DefaultHasher<Value*>, SystemAllocPolicy> RootedValueMap;
+
 class GCRuntime
 {
   public:
     explicit GCRuntime(JSRuntime* rt)
-        : nursery(rt),
+        : rt(rt),
+		nursery(rt),
 #ifndef OMR
         storeBuffer(rt, nursery),
 #endif // OMR
@@ -64,8 +69,11 @@ class GCRuntime
         { }
     
     MOZ_MUST_USE bool init(uint32_t maxbytes, uint32_t maxNurseryBytes);
-	void finishRoots() {}
+	void finishRoots();
     void finish();
+
+    MOZ_MUST_USE bool addRoot(Value* vp, const char* name);
+    void removeRoot(Value* vp);
 
     MOZ_MUST_USE bool setParameter(JSGCParamKey key, uint32_t value, AutoLockGC& lock);
     uint32_t getParameter(JSGCParamKey key, const AutoLockGC& lock);
@@ -92,6 +100,13 @@ class GCRuntime
 
 	void notifyDidPaint();
 	void onOutOfMallocMemory();
+
+    void traceRuntime(JSTracer* trc, AutoLockForExclusiveAccess& lock);
+    void traceRuntimeForMinorGC(JSTracer* trc, AutoLockForExclusiveAccess& lock);
+    void traceRuntimeForMajorGC(JSTracer* trc, AutoLockForExclusiveAccess& lock);
+    void traceRuntimeAtoms(JSTracer* trc, AutoLockForExclusiveAccess& lock);
+    void traceRuntimeCommon(JSTracer* trc, TraceOrMarkRuntime traceOrMark,
+                            AutoLockForExclusiveAccess& lock);
 
 #ifdef JS_GC_ZEAL
     const void* addressOfZealModeBits() { return nullptr; }
@@ -189,6 +204,17 @@ class GCRuntime
 	void triggerFullGCForAtoms() {
 	}
 
+    void bufferGrayRoots();
+    void maybeDoCycleCollection();
+    bool drainMarkStack(SliceBudget& sliceBudget, gcstats::Phase phase);
+    template <class CompartmentIterT> void markWeakReferences(gcstats::Phase phase);
+    void markWeakReferencesInCurrentGroup(gcstats::Phase phase);
+    template <class ZoneIterT, class CompartmentIterT> void markGrayReferences(gcstats::Phase phase);
+    void markBufferedGrayRoots(JS::Zone* zone);
+    void markGrayReferencesInCurrentGroup(gcstats::Phase phase);
+    void markAllWeakReferences(gcstats::Phase phase);
+    void markAllGrayReferences(gcstats::Phase phase);
+
   public:
     JSRuntime* rt;
 
@@ -211,10 +237,51 @@ class GCRuntime
     /* Track heap usage for this runtime. */
     HeapUsage usage;
 
+    /*
+     * The trace operations to trace embedding-specific GC roots. One is for
+     * tracing through black roots and the other is for tracing through gray
+     * roots. The black/gray distinction is only relevant to the cycle
+     * collector.
+     */
+    CallbackVector<JSTraceDataOp> blackRootTracers;
+    Callback<JSTraceDataOp> grayRootTracer;
+
 	js::Mutex lock;
 	
 	bool hasZealMode(ZealMode mode) { return false; }
 	bool upcomingZealousGC() { return false; }
+
+  private:
+    // Gray marking must be done after all black marking is complete. However,
+    // we do not have write barriers on XPConnect roots. Therefore, XPConnect
+    // roots must be accumulated in the first slice of incremental GC. We
+    // accumulate these roots in each zone's gcGrayRoots vector and then mark
+    // them later, after black marking is complete for each compartment. This
+    // accumulation can fail, but in that case we switch to non-incremental GC.
+    enum class GrayBufferState {
+        Unused,
+        Okay,
+        Failed
+    };
+    GrayBufferState grayBufferState;
+    bool hasBufferedGrayRoots() const { return grayBufferState == GrayBufferState::Okay; }
+
+    // Clear each zone's gray buffers, but do not change the current state.
+    void resetBufferedGrayRoots() const;
+
+    // Reset the gray buffering state to Unused.
+    void clearBufferedGrayRoots() {
+        grayBufferState = GrayBufferState::Unused;
+        resetBufferedGrayRoots();
+    }
+
+    /*
+     * The gray bits can become invalid if UnmarkGray overflows the stack. A
+     * full GC will reset this bit, since it fills in all the gray bits.
+     */
+    bool grayBitsValid;
+
+    RootedValueMap rootsHash;
 };
 
 /* Prevent compartments and zones from being collected during iteration. */
