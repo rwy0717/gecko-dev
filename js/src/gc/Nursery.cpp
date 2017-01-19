@@ -44,10 +44,6 @@ using mozilla::DebugOnly;
 using mozilla::PodCopy;
 using mozilla::PodZero;
 
-
-OMR_VMThread* js::Nursery::omrVMThread = nullptr;
-OMR_VM* js::Nursery::omrVM = nullptr;
-
 void
 js::Nursery::disable()
 {

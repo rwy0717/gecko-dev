@@ -43,6 +43,8 @@ protected:
 	OMR_VM *_omrVM;
 	MM_GCExtensionsBase *_extensions;
 	MM_MarkingScheme *_markingScheme;
+	js::Runtime *rt_;
+
 public:
 	enum AttachVMThreadReason {
 		ATTACH_THREAD = 0x0,

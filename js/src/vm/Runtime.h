@@ -52,6 +52,9 @@
 #include "vm/Stopwatch.h"
 #include "vm/Symbol.h"
 
+#include "OMR_VM.hpp"
+#include "OMR_VMThread.hpp"
+
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4100) /* Silence unreferenced formal parameter warnings */
@@ -266,6 +269,7 @@ class PerThreadData
      * functions like |runtimeFromMainThread| and |associatedWith()| below.
      */
     JSRuntime* runtime_;
+	OMR_VMThread* omrVMThread;
 
   public:
 #ifdef JS_TRACE_LOGGING
@@ -839,6 +843,7 @@ struct JSRuntime : public JS::shadow::Runtime,
 
     /* Garbage collector state, used by jsgc.c. */
     js::gc::GCRuntime   gc;
+    OMR_VM* omrVM;
 
     /* Garbage collector state has been successfully initialized. */
     bool                gcInitialized;

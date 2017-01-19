@@ -80,8 +80,6 @@ CanNurseryAllocateFinalizedClass(const js::Class* const clasp)
 class Nursery
 {
   public:
-    static OMR_VMThread* omrVMThread;
-    static OMR_VM* omrVM;
 
     explicit Nursery(JSRuntime* rt) {}
     ~Nursery() {}

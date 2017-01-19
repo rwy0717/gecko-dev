@@ -309,8 +309,10 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_scanRoots(MM_EnvironmentBase *e
 
         js::gc::AutoTraceSession session(rt_, HeapState::MajorCollecting);
         omrjs::OMRGCMarker gcMarker(env, _markingScheme);
+	auto rt = getContext(env)->runtimeFromAnyThread();
 
-        // rt->gc->traceRuntimeCommon(trc, gcMarker, session.lock);
+        rt->gc->traceRuntimeCommon(trc, gcMarker, session.lock);
+
         // MOZ_ASSERT(!rt->mainThread.suppressGC);
         // gcstats::AutoPhase ap(stats, gcstats::PHASE_MARK_STACK);
 
@@ -329,54 +331,6 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_scanRoots(MM_EnvironmentBase *e
         // Trace C stack roots.
         TraceExactStackRoots(rt, trc);
     }
-
-    // Trace runtime global roots.
-    TracePersistentRooted(rt, trc);
-
-    // Trace the self-hosting global compartment.
-    rt->traceSelfHostingGlobal(trc);
-
-    // Trace the shared Intl data.
-    rt->traceSharedIntlData(trc);
-
-    // Trace anything in the single context. Note that this is actually the
-    // same struct as the JSRuntime, but is still split for historical reasons.
-    rt->contextFromMainThread()->trace(trc);
-
-    // Trace all compartment roots, but not the compartment itself; it is
-    // traced via the parent pointer if traceRoots actually traces anything.
-    for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next())
-        c->traceRoots(trc, traceOrMark);
-
-    // Trace SPS.
-    rt->spsProfiler.trace(trc);
-
-    // Trace helper thread roots.
-    HelperThreadState().trace(trc);
-
-    // Trace the embedding's black and gray roots.
-    if (!rt->isHeapMinorCollecting()) {
-        gcstats::AutoPhase ap(stats, gcstats::PHASE_MARK_EMBEDDING);
-
-        /*
-         * The embedding can register additional roots here.
-         *
-         * We don't need to trace these in a minor GC because all pointers into
-         * the nursery should be in the store buffer, and we want to avoid the
-         * time taken to trace all these roots.
-         */
-        for (size_t i = 0; i < blackRootTracers.length(); i++) {
-            const Callback<JSTraceDataOp>& e = blackRootTracers[i];
-            (*e.op)(trc, e.data);
-        }
-
-        /* During GC, we don't trace gray roots at this stage. */
-        if (JSTraceDataOp op = grayRootTracer.op) {
-            if (traceOrMark == TraceRuntime)
-                (*op)(trc, grayRootTracer.data);
-        }
-    }
-        traceRuntimeForMajorGC(gcMarker, session.lock);
 
 #if 0 // TODO: Implement JIT tracing
         if (rt->atomsCompartment(lock)->zone()->isCollecting())
@@ -407,12 +361,21 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_masterCleanupAfterGC(MM_Environ
 {
 }
 
+struct TraceChildrenFunctor {
+	MM_EnvironmentBase* env_;
+	
+	template <typename T>
+	operator ()(T* thing) {
+		thing->traceChildren(env_->omrGcTracer_);
+	}
+};
+
 uintptr_t
 MM_CollectorLanguageInterfaceImpl::markingScheme_scanObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MarkingSchemeScanReason reason)
 {
-
-	/* This will likely get moved back into MarkingScheme and use an object scanner to walk the slots of an Object */
-        assert(0);
+	TraceChildrenFunctor traceChildren(env);
+	DispatchedTyped(traceChildren, *(TaggedProto*)objectPtr);
+	return 0;
 }
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)

@@ -212,7 +212,7 @@ class GCRuntime
     HeapUsage usage;
 
 	js::Mutex lock;
-	
+
 	bool hasZealMode(ZealMode mode) { return false; }
 	bool upcomingZealousGC() { return false; }
 };
