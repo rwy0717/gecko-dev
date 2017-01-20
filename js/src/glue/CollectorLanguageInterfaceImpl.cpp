@@ -19,7 +19,7 @@
 #define DEBUG 1 
 #define TRACING 1 
 #define EXPORT_JS_API 
-#define topsrcdir /Users/rwyoung/wsp/gecko
+#define topsrcdir /team/jasonhal/spidermonkey/gecko-dev
 #define CPP_THROW_NEW 'throw()' 
 #define D_INO d_ino 
 #define E10S_TESTING_ONLY 1 
@@ -174,10 +174,12 @@
 #include "gc/Marking.h"
 
 // OMR
-#include "CollectorLanguageInterfaceImpl.hpp"
-#include "MarkingScheme.hpp"
-
 #include "omrglue.hpp"
+
+#include "CollectorLanguageInterfaceImpl.hpp"
+#include "Dispatcher.hpp"
+#include "MarkingScheme.hpp"
+#include "Task.hpp"
 
 using namespace js;
 using namespace JS;
@@ -194,10 +196,10 @@ using mozilla::IsSame;
 using mozilla::MakeRange;
 using mozilla::PodCopy;
 
-OMRGCMarker::OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env, MM_MarkingScheme* ms)
+OMRGCMarker::OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env/*, MM_MarkingScheme* ms*/)
 	: JSTracer(rt, JSTracer::TracerKindTag::Marking, ExpandWeakMaps),
-	  env_(env),
-	  ms_(ms) {
+	  env_(env)
+	  /*ms_(ms)*/ {
 }
 
 template <typename T> void OMRGCMarker::traverse(T thing) { assert(0); }
@@ -304,6 +306,19 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_masterSetupForGC(MM_Environment
 void
 MM_CollectorLanguageInterfaceImpl::markingScheme_scanRoots(MM_EnvironmentBase *env)
 {
+	if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+		OMR_VM *omrVM = env->getOmrVM();
+		JSRuntime *rt = (JSRuntime *)omrVM->_language_vm;
+		assert(!rt->isBeingDestroyed());
+		if (NULL == _omrGCMarker) {
+			MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVM);
+
+			_omrGCMarker = (omrjs::OMRGCMarker *)extensions->getForge()->allocate(sizeof(omrjs::OMRGCMarker), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
+			new (_omrGCMarker) omrjs::OMRGCMarker(rt, env);
+		}
+		js::gc::AutoTraceSession session(rt);
+		rt->gc.traceRuntimeCommon(_omrGCMarker, js::gc::GCRuntime::TraceOrMarkRuntime::TraceRuntime, session.lock);
+	}
 }
 
 void
@@ -326,11 +341,24 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_masterCleanupAfterGC(MM_Environ
 {
 }
 
+struct TraceChildrenFunctor {
+	MM_CollectorLanguageInterfaceImpl *cli;
+
+	template <typename T>
+	void operator()(T* thing) {
+		//thing->traceChildren(env_->_omrGCMarker);
+		static_cast<T*>(thing)->traceChildren(cli->_omrGCMarker);
+	}
+};
+
+
 uintptr_t
 MM_CollectorLanguageInterfaceImpl::markingScheme_scanObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MarkingSchemeScanReason reason)
 {
-	/* This will likely get moved back into MarkingScheme and use an object scanner to walk the slots of an Object */
-        assert(0);
+	TraceChildrenFunctor traceChildren = {this};
+	DispatchTraceKindTyped(traceChildren, (Cell *)objectPtr, ((Cell *)objectPtr)->getTraceKind());
+	//DispatchTyped(traceChildren, *(TaggedProto*)objectPtr, _omrGCMarker);
+	return 0;
 }
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)

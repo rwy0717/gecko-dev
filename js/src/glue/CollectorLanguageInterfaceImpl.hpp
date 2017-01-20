@@ -32,6 +32,10 @@ class MM_ForwardedHeader;
 class MM_MarkingScheme;
 class MM_MemorySubSpaceSemiSpace;
 
+namespace omrjs {
+	class OMRGCMarker;
+};
+
 /**
  * Class representing a collector language interface.  This implements the API between the OMR
  * functionality and the language being implemented.
@@ -43,6 +47,7 @@ protected:
 	OMR_VM *_omrVM;
 	MM_GCExtensionsBase *_extensions;
 	MM_MarkingScheme *_markingScheme;
+
 public:
 	enum AttachVMThreadReason {
 		ATTACH_THREAD = 0x0,
@@ -50,6 +55,7 @@ public:
 		ATTACH_GC_HELPER_THREAD = 0x2,
 		ATTACH_GC_MASTER_THREAD = 0x3,
 	};
+	omrjs::OMRGCMarker *_omrGCMarker;
 
 private:
 protected:

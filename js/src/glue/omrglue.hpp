@@ -49,7 +49,7 @@ using namespace JS;
 class OMRGCMarker : public JSTracer
 {
 public:
-    explicit OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env, MM_MarkingScheme* ms);
+    explicit OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env/*, MM_MarkingScheme* ms*/);
 
     // Mark the given GC thing and traverse its children at some point.
     template <typename T> void traverse(T thing);
@@ -67,7 +67,7 @@ public:
 
 private:
     MM_EnvironmentBase* env_;
-    MM_MarkingScheme* ms_;
+    /*MM_MarkingScheme* ms_*/;
 
     // We may not have concrete types yet, so this has to be outside the header.
     template <typename T>
@@ -76,8 +76,7 @@ private:
     // Mark the given GC thing, but do not trace its children. Return true
     // if the thing became marked.
     template <typename T>
-    bool mark(T* thing);
-
+    bool mark(T* thing) { return true; }
 };
 
 } // namespace omrjs
