@@ -39,6 +39,8 @@
 #include "vm/String-inl.h"
 #include "vm/UnboxedObject-inl.h"
 
+#include "../glue/omrglue.hpp"
+
 using namespace js;
 using namespace js::gc;
 
@@ -576,10 +578,14 @@ DispatchToTracer(JSTracer* trc, T* thingp, const char* name)
             mozilla::IsSame<T, TaggedProto>::value,
             "Only the base cell layout types are allowed into marking/tracing internals");
 #undef IS_SAME_TYPE_OR
-    if (trc->isTenuringTracer())
+    if (trc->isMarkingTracer())
+        return DoMarking(static_cast<GCMarker*>(trc), *thingp);
+    else if (trc->isTenuringTracer())
         return static_cast<TenuringTracer*>(trc)->traverse(thingp);
-    MOZ_ASSERT(trc->isCallbackTracer());
-    DoCallback(trc->asCallbackTracer(), thingp, name);
+    else if(trc->isCallbackTracer())
+		DoCallback(trc->asCallbackTracer(), thingp, name);
+	else
+		return static_cast<omrjs::OMRGCMarker*>(trc)->traverse(thingp);
 }
 
 

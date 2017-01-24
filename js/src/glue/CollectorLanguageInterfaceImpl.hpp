@@ -66,6 +66,7 @@ protected:
 		: MM_CollectorLanguageInterface()
 		,_omrVM(omrVM)
 		,_extensions(MM_GCExtensionsBase::getExtensions(omrVM))
+		,_omrGCMarker(NULL)
 	{
 		_typeId = __FUNCTION__;
 	}

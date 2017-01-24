@@ -510,7 +510,7 @@ JS_NewContext(uint32_t maxbytes, uint32_t maxNurseryBytes, JSContext* parentCont
 	JS_PUBLIC_API(JSContext*) cx = NewContext(maxbytes, maxNurseryBytes, parentRuntime);
 #if defined(OMR)
 	omr_error_t rc = InitializeOMR();
-	Nursery::omrVM->_language_vm = parentRuntime;
+	Nursery::omrVM->_language_vm = cx->runtime();
 #endif /* defined(OMR) */
 	return cx;
 }

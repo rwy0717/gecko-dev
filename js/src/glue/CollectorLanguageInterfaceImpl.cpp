@@ -196,23 +196,11 @@ using mozilla::IsSame;
 using mozilla::MakeRange;
 using mozilla::PodCopy;
 
-OMRGCMarker::OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env/*, MM_MarkingScheme* ms*/)
+OMRGCMarker::OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env, MM_MarkingScheme* ms)
 	: JSTracer(rt, JSTracer::TracerKindTag::Marking, ExpandWeakMaps),
-	  env_(env)
-	  /*ms_(ms)*/ {
+	  _env(env),
+	  _markingScheme(ms) {
 }
-
-template <typename T> void OMRGCMarker::traverse(T thing) { assert(0); }
-template <> void OMRGCMarker::traverse(BaseShape* thing) { mark(thing); }
-template <> void OMRGCMarker::traverse(JS::Symbol* thing) { mark(thing); }
-template <> void OMRGCMarker::traverse(JSString* thing) { mark(thing); }
-template <> void OMRGCMarker::traverse(LazyScript* thing) { mark(thing); }
-template <> void OMRGCMarker::traverse(Shape* thing) { mark(thing); }
-template <> void OMRGCMarker::traverse(js::Scope* thing) { mark(thing); }
-template <> void OMRGCMarker::traverse(JSObject* thing) { mark(thing); }
-template <> void OMRGCMarker::traverse(ObjectGroup* thing) { mark(thing); }
-template <> void OMRGCMarker::traverse(jit::JitCode* thing) { mark(thing); }
-template <> void OMRGCMarker::traverse(JSScript* thing) { mark(thing); }
 
 } // namespace omrjs
 
@@ -309,12 +297,11 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_scanRoots(MM_EnvironmentBase *e
 	if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		OMR_VM *omrVM = env->getOmrVM();
 		JSRuntime *rt = (JSRuntime *)omrVM->_language_vm;
-		assert(!rt->isBeingDestroyed());
 		if (NULL == _omrGCMarker) {
 			MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVM);
 
 			_omrGCMarker = (omrjs::OMRGCMarker *)extensions->getForge()->allocate(sizeof(omrjs::OMRGCMarker), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
-			new (_omrGCMarker) omrjs::OMRGCMarker(rt, env);
+			new (_omrGCMarker) omrjs::OMRGCMarker(rt, env, _markingScheme);
 		}
 		js::gc::AutoTraceSession session(rt);
 		rt->gc.traceRuntimeCommon(_omrGCMarker, js::gc::GCRuntime::TraceOrMarkRuntime::TraceRuntime, session.lock);
@@ -346,7 +333,6 @@ struct TraceChildrenFunctor {
 
 	template <typename T>
 	void operator()(T* thing) {
-		//thing->traceChildren(env_->_omrGCMarker);
 		static_cast<T*>(thing)->traceChildren(cli->_omrGCMarker);
 	}
 };
@@ -357,7 +343,6 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_scanObject(MM_EnvironmentBase *
 {
 	TraceChildrenFunctor traceChildren = {this};
 	DispatchTraceKindTyped(traceChildren, (Cell *)objectPtr, ((Cell *)objectPtr)->getTraceKind());
-	//DispatchTyped(traceChildren, *(TaggedProto*)objectPtr, _omrGCMarker);
 	return 0;
 }
 

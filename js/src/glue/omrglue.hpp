@@ -49,10 +49,10 @@ using namespace JS;
 class OMRGCMarker : public JSTracer
 {
 public:
-    explicit OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env/*, MM_MarkingScheme* ms*/);
+    explicit OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env, MM_MarkingScheme* ms);
 
     // Mark the given GC thing and traverse its children at some point.
-    template <typename T> void traverse(T thing);
+    template <typename T> inline void traverse(T thing);
 
     // Calls traverse on target after making additional assertions.
     template <typename S, typename T> void traverseEdge(S source, T* target);
@@ -66,8 +66,8 @@ public:
     }
 
 private:
-    MM_EnvironmentBase* env_;
-    /*MM_MarkingScheme* ms_*/;
+    MM_EnvironmentBase* _env;
+    MM_MarkingScheme* _markingScheme;
 
     // We may not have concrete types yet, so this has to be outside the header.
     template <typename T>
@@ -76,8 +76,23 @@ private:
     // Mark the given GC thing, but do not trace its children. Return true
     // if the thing became marked.
     template <typename T>
-    bool mark(T* thing) { return true; }
+    bool mark(T* thing) {
+		_markingScheme->markObject(_env, (omrobjectptr_t)thing, false);
+		return true;
+	}
 };
+
+template <typename T> inline void OMRGCMarker::traverse(T thing) { assert(0); }
+template <> inline void OMRGCMarker::traverse(BaseShape* thing) { mark(thing); }
+template <> inline void OMRGCMarker::traverse(JS::Symbol* thing) { mark(thing); }
+template <> inline void OMRGCMarker::traverse(JSString* thing) { mark(thing); }
+template <> inline void OMRGCMarker::traverse(LazyScript* thing) { mark(thing); }
+template <> inline void OMRGCMarker::traverse(Shape* thing) { mark(thing); }
+template <> inline void OMRGCMarker::traverse(js::Scope* thing) { mark(thing); }
+template <> inline void OMRGCMarker::traverse(JSObject* thing) { mark(thing); }
+template <> inline void OMRGCMarker::traverse(ObjectGroup* thing) { mark(thing); }
+template <> inline void OMRGCMarker::traverse(jit::JitCode* thing) { mark(thing); }
+template <> inline void OMRGCMarker::traverse(JSScript* thing) { mark(thing); }
 
 } // namespace omrjs
 
