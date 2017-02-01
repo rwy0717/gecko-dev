@@ -89,7 +89,7 @@ public:
 	virtual void parallelGlobalGC_masterThreadGarbageCollect_beforeGC(MM_EnvironmentBase *env) {}
 	virtual void parallelGlobalGC_masterThreadGarbageCollect_afterGC(MM_EnvironmentBase *env, bool compactThisCycle) {}
 	virtual void parallelGlobalGC_postPrepareHeapForWalk(MM_EnvironmentBase *env) {}
-	virtual void parallelGlobalGC_postMarkProcessing(MM_EnvironmentBase *env) {}
+	virtual void parallelGlobalGC_postMarkProcessing(MM_EnvironmentBase *env);
 	virtual void parallelGlobalGC_setupBeforeGC(MM_EnvironmentBase *env) {}
 	virtual void parallelGlobalGC_setMarkingScheme(MM_EnvironmentBase *env, void *markingScheme) {_markingScheme = (MM_MarkingScheme *)markingScheme;}
 	virtual bool parallelGlobalGC_createAccessBarrier(MM_EnvironmentBase *env) {return true;}

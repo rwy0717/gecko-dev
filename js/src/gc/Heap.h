@@ -597,7 +597,46 @@ Cell::storeBuffer() const
 inline JS::TraceKind
 Cell::getTraceKind() const
 {
-    return JS::TraceKind::Object;
+    switch (getAllocKind())
+	{
+		case AllocKind::FUNCTION_EXTENDED:
+		case AllocKind::OBJECT0:
+		case AllocKind::OBJECT0_BACKGROUND:
+		case AllocKind::OBJECT2:
+		case AllocKind::OBJECT2_BACKGROUND:
+		case AllocKind::OBJECT4:
+		case AllocKind::OBJECT4_BACKGROUND:
+		case AllocKind::OBJECT8:
+		case AllocKind::OBJECT8_BACKGROUND:
+		case AllocKind::OBJECT12:
+		case AllocKind::OBJECT12_BACKGROUND:
+		case AllocKind::OBJECT16:
+		case AllocKind::OBJECT16_BACKGROUND:
+			return JS::TraceKind::Object;
+		case AllocKind::SCRIPT:
+			return JS::TraceKind::Script;
+		case AllocKind::LAZY_SCRIPT:
+			return JS::TraceKind::LazyScript;
+		case AllocKind::SHAPE:
+		case AllocKind::ACCESSOR_SHAPE:
+			return JS::TraceKind::Shape;
+		case AllocKind::BASE_SHAPE:
+			return JS::TraceKind::BaseShape;
+		case AllocKind::OBJECT_GROUP:
+			return JS::TraceKind::ObjectGroup;
+		case AllocKind::FAT_INLINE_STRING:
+		case AllocKind::STRING:
+		case AllocKind::EXTERNAL_STRING:
+			return JS::TraceKind::String;
+		case AllocKind::SYMBOL:
+			return JS::TraceKind::Symbol;
+		case AllocKind::JITCODE:
+			return JS::TraceKind::JitCode;
+		case AllocKind::SCOPE:
+			return JS::TraceKind::Scope;
+		default:
+			MOZ_ASSERT(false);
+	}
 }
 
 /* static */ MOZ_ALWAYS_INLINE bool
@@ -651,7 +690,7 @@ TenuredCell::arena() const
 JS::TraceKind
 TenuredCell::getTraceKind() const
 {
-    return (JS::TraceKind)0;
+    return Cell::getTraceKind();
 }
 
 #ifndef OMR // Disable getting zone without context

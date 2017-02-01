@@ -1131,7 +1131,6 @@ js::NewCompartment(JSContext* cx, Zone* zone, JSPrincipals* principals,
 		JSRuntime* rt = cx->runtime();
 		zone = cx->new_<Zone>(rt);
 #ifdef OMR
-        fprintf(stderr, "** New zone %p\n", zone);
         // OMRTODO: Use multiple zones from a context correctly.
         OmrGcHelper::zone = zone;
 #endif

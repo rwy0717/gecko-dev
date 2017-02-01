@@ -52,7 +52,8 @@ public:
     explicit OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env, MM_MarkingScheme* ms);
 
     // Mark the given GC thing and traverse its children at some point.
-    template <typename T> inline void traverse(T thing);
+    template <typename T> inline void traverse(T *thing);
+    template <typename T> inline void traverse(T **thing);
 
     // Calls traverse on target after making additional assertions.
     template <typename S, typename T> void traverseEdge(S source, T* target);
@@ -82,7 +83,11 @@ private:
 	}
 };
 
-template <typename T> inline void OMRGCMarker::traverse(T thing) { assert(0); }
+template <typename T> inline void OMRGCMarker::traverse(T *thing) { assert(0); }
+template <typename T> inline void OMRGCMarker::traverse(T **thing) { traverse(*thing); }
+template <> inline void OMRGCMarker::traverse(JS::Value* thing) {}
+template <> inline void OMRGCMarker::traverse(jsid* thing) {}
+template <> inline void OMRGCMarker::traverse(js::TaggedProto* thing) {}
 template <> inline void OMRGCMarker::traverse(BaseShape* thing) { mark(thing); }
 template <> inline void OMRGCMarker::traverse(JS::Symbol* thing) { mark(thing); }
 template <> inline void OMRGCMarker::traverse(JSString* thing) { mark(thing); }

@@ -178,7 +178,12 @@
 
 #include "CollectorLanguageInterfaceImpl.hpp"
 #include "Dispatcher.hpp"
+#include "Heap.hpp"
+#include "HeapRegionIterator.hpp"
 #include "MarkingScheme.hpp"
+#include "ObjectHeapIteratorAddressOrderedList.hpp"
+#include "ObjectMap.hpp"
+#include "OMRVMInterface.hpp"
 #include "Task.hpp"
 
 using namespace js;
@@ -197,7 +202,7 @@ using mozilla::MakeRange;
 using mozilla::PodCopy;
 
 OMRGCMarker::OMRGCMarker(JSRuntime* rt, MM_EnvironmentBase* env, MM_MarkingScheme* ms)
-	: JSTracer(rt, JSTracer::TracerKindTag::Marking, ExpandWeakMaps),
+	: JSTracer(rt, JSTracer::TracerKindTag::OMR_SCAN, ExpandWeakMaps),
 	  _env(env),
 	  _markingScheme(ms) {
 }
@@ -565,4 +570,32 @@ omrobjectptr_t
 MM_CollectorLanguageInterfaceImpl::heapWalker_heapWalkerObjectSlotDo(omrobjectptr_t object)
 {
 	return NULL;
+}
+void
+MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_EnvironmentBase *env)
+{
+	/* this puts the heap into the state required to walk it */
+	GC_OMRVMInterface::flushCachesForGC(env);
+
+	MM_HeapRegionManager *regionManager = _extensions->getHeap()->getHeapRegionManager();
+	GC_HeapRegionIterator regionIterator(regionManager);
+
+	/* walk the heap, for objects that are not marked we corrupt them to maximize the chance we will crash immediately
+	if they are used.  For live objects validate that they have theexpected eyecatcher */
+	MM_HeapRegionDescriptor *hrd = NULL;
+	while (NULL != (hrd = regionIterator.nextRegion())) {
+		/* walk all of the object, make sure that those that were not marked are no longer
+		usable such that if they are later used we will know this and optimally crash */
+		GC_ObjectHeapIteratorAddressOrderedList objectIterator(_extensions, hrd, false);
+		omrobjectptr_t omrobjptr = NULL;
+		while (NULL != (omrobjptr = objectIterator.nextObject())) {
+			assert(_extensions->getObjectMap()->isValidObject(omrobjptr));
+			if (!_markingScheme->isMarked(omrobjptr)) {
+				/* object will be collected. We write the full contents of the object with a known value. */
+				uintptr_t objsize = _extensions->objectModel.getConsumedSizeInBytesWithHeader(omrobjptr);
+				memset(omrobjptr,0x5E,(size_t) objsize);
+				MM_HeapLinkedFreeHeader::fillWithHoles(omrobjptr, objsize);
+			}
+		}
+	}
 }

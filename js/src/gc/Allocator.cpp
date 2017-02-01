@@ -113,6 +113,17 @@ Allocate<JSExternalString, NoGC>(ExclusiveContext* cx) {
 	return Allocate<JSExternalString, NoGC>(cx, gc::AllocKind::EXTERNAL_STRING);
 }
 
+template <>
+js::ObjectGroup*
+Allocate<js::ObjectGroup, CanGC>(ExclusiveContext* cx) {
+	return Allocate<js::ObjectGroup, CanGC>(cx, gc::AllocKind::OBJECT_GROUP);
+}
+template <>
+js::ObjectGroup*
+Allocate<js::ObjectGroup, NoGC>(ExclusiveContext* cx) {
+	return Allocate<js::ObjectGroup, NoGC>(cx, gc::AllocKind::OBJECT_GROUP);
+}
+
 template <typename T, AllowGC allowGC /* = CanGC */>
 T*
 Allocate(ExclusiveContext* cx) {
