@@ -194,9 +194,9 @@ struct Cell
 
     inline JS::TraceKind getTraceKind() const;
 
-    inline AllocKind getAllocKind() const { return (AllocKind)flags_; }
+    inline AllocKind getAllocKind() const { return (AllocKind)(flags_ >> 2); }
 
-    inline void setAllocKind(AllocKind allocKind) { flags_ = (Flags)allocKind; }
+    inline void setAllocKind(AllocKind allocKind) { flags_ = (Flags)(((int)allocKind) << 2); }
 
     static MOZ_ALWAYS_INLINE bool needWriteBarrierPre(JS::Zone* zone);
 
@@ -214,7 +214,6 @@ struct Cell
 
   public:
     Flags flags_;
-
 } JS_HAZ_GC_THING;
 
 // A GC TenuredCell gets behaviors that are valid for things in the Tenured
@@ -287,7 +286,7 @@ class FreeSpan
     }
 };
 
-#ifdef OMR // Arena replacement helpers
+//#ifdef OMR // Arena replacement helpers
 // OMRTODO: Move to object model
 class OmrGcHelper {
 public:
@@ -301,7 +300,7 @@ public:
     static JS::Zone* zone;
     static GCRuntime* runtime;
 };
-#endif // ! OMR Arena replacemnt helpers
+//#endif // ! OMR Arena replacemnt helpers
 
 #ifndef OMR // Arenas
 
@@ -599,7 +598,6 @@ Cell::getTraceKind() const
 {
     switch (getAllocKind())
 	{
-		case AllocKind::FUNCTION_EXTENDED:
 		case AllocKind::OBJECT0:
 		case AllocKind::OBJECT0_BACKGROUND:
 		case AllocKind::OBJECT2:
@@ -635,7 +633,7 @@ Cell::getTraceKind() const
 		case AllocKind::SCOPE:
 			return JS::TraceKind::Scope;
 		default:
-			MOZ_ASSERT(false);
+			return JS::TraceKind::Null;
 	}
 }
 

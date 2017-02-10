@@ -135,7 +135,7 @@ T*
 Allocate(ExclusiveContext* cx, gc::AllocKind kind) {
 	JSContext* ncx = cx->asJSContext();
 	JSRuntime* rt = ncx->runtime();
-	Cell* obj = rt->gc.nursery.allocateObject(ncx, sizeof(T), 0, nullptr);
+	Cell* obj = rt->gc.nursery.allocateObject(ncx, sizeof(T), 0, nullptr, allowGC == CanGC);
 	obj->setAllocKind(kind);
 	return (T*)obj;
 }
@@ -155,7 +155,7 @@ js::Allocate(ExclusiveContext* cx, gc::AllocKind kind, size_t nDynamicSlots, gc:
          const Class* clasp) {
 	JSContext* ncx = cx->asJSContext();
 	JSRuntime* rt = ncx->runtime();
-	JSObject* obj = rt->gc.nursery.allocateObject(ncx, OmrGcHelper::thingSize(kind), nDynamicSlots, clasp);
+	JSObject* obj = rt->gc.nursery.allocateObject(ncx, OmrGcHelper::thingSize(kind), nDynamicSlots, clasp, allowGC == CanGC);
 	obj->setAllocKind(kind);
 	return obj;
 }

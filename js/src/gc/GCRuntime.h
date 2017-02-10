@@ -58,7 +58,8 @@ class GCRuntime
 {
   public:
     explicit GCRuntime(JSRuntime* rt)
-        : rt(rt),
+        : number(0),
+		rt(rt),
 		nursery(rt),
 #ifndef OMR
         storeBuffer(rt, nursery),
@@ -174,11 +175,13 @@ class GCRuntime
          return systemZone;
     }
 
-    uint64_t gcNumber() const { return 0; }
+	uint64_t number;
+    uint64_t gcNumber() const { return number; }
+	void incGcNumber() { ++ number; }
 
-    uint64_t minorGCCount() const { return 0; }
+    uint64_t minorGCCount() const { return number; }
 
-    uint64_t majorGCCount() const { return 0; }
+    uint64_t majorGCCount() const { return number; }
 
 	bool isFullGc() const { return false; }
 

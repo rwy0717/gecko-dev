@@ -55,12 +55,19 @@ js::Nursery::disable()
 }
 
 JSObject*
-js::Nursery::allocateObject(JSContext* cx, size_t size, size_t numDynamic, const js::Class* clasp) {
-	JSObject* obj = (JSObject *)OMR_GC_Allocate(Nursery::omrVMThread, 0, size, 0);
+js::Nursery::allocateObject(JSContext* cx, size_t size, size_t numDynamic, const js::Class* clasp, bool canGC)
+{
+	JSObject* obj = nullptr;
+	if (canGC) {
+		OMR_GC_SystemCollect(omrVMThread, 0);
+		cx->gc.incGcNumber();
+		obj = (JSObject *)OMR_GC_Allocate(Nursery::omrVMThread, 0, size, 0);
+	} else {
+		obj = (JSObject *)OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, size, 0);
+	}
 	if (obj) {
-		if (numDynamic > 0)
-		{
-			HeapSlot* slots = (HeapSlot *)OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, numDynamic * sizeof(HeapSlot *), 0);
+		if (numDynamic > 0) {
+			HeapSlot* slots = (HeapSlot *)malloc(numDynamic * sizeof(HeapSlot *));//OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, numDynamic * sizeof(HeapSlot *), 0);
 			if (!slots)
 				return nullptr;
 			obj->setInitialSlotsMaybeNonNative(slots);

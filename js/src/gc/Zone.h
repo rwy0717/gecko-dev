@@ -150,7 +150,7 @@ struct Zone : public JS::shadow::Zone,
 
     // Get a number that is incremented whenever this zone is collected, and
     // possibly at other times too.
-    uint64_t gcNumber() { return 0; }
+    uint64_t gcNumber() { return runtimeFromMainThread()->gc.gcNumber(); }
 
     const bool* addressOfNeedsIncrementalBarrier() const { return nullptr; }
 
@@ -176,7 +176,7 @@ struct Zone : public JS::shadow::Zone,
     DebuggerVector* getDebuggers() const { return nullptr; }
     DebuggerVector* getOrCreateDebuggers(JSContext* cx);
 
-    void clearTables() {}
+    void clearTables();
 
     /*
      * When true, skip calling the metadata callback. We use this:
@@ -361,19 +361,37 @@ enum ZoneSelector {
 
 class ZonesIter
 {
+    gc::AutoEnterIteration iterMarker;
+    JS::Zone** it;
+    JS::Zone** end;
+
   public:
-    ZonesIter(JSRuntime* rt, ZoneSelector selector) {
+    ZonesIter(JSRuntime* rt, ZoneSelector selector) : iterMarker(&rt->gc) {
+        it = rt->gc.zones.begin();
+        end = rt->gc.zones.end();
+
+		/*MOZ_ASSERT(*it == *end);
+
+        if (selector == SkipAtoms) {
+            MOZ_ASSERT(atAtomsZone(rt));
+            it++;
+        }*/
     }
 
-    bool atAtomsZone(JSRuntime* rt) { return true; }
+    bool atAtomsZone(JSRuntime* rt);
 
-    bool done() const { return true; }
+    bool done() const { return it == end; }
 
     void next() {
+        MOZ_ASSERT(!done());
+        do {
+            it++;
+        } while (!done() && (*it)->usedByExclusiveThread);
     }
 
     JS::Zone* get() const {
-        return nullptr;
+        MOZ_ASSERT(!done());
+        return *it;
     }
 
     operator JS::Zone*() const { return get(); }

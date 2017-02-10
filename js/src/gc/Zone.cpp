@@ -71,3 +71,12 @@ Zone::createJitZone(JSContext* cx)
     jitZone_ = cx->new_<js::jit::JitZone>();
     return jitZone_;
 }
+
+void
+Zone::clearTables()
+{
+    if (baseShapes.initialized())
+        baseShapes.clear();
+    if (initialShapes.initialized())
+        initialShapes.clear();
+}

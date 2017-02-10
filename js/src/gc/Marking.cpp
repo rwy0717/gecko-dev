@@ -521,8 +521,10 @@ js::TraceProcessGlobalRoot(JSTracer* trc, T* thing, const char* name)
     CheckTracedThing(trc, *ConvertToBase(&thing));
     if (trc->isMarkingTracer())
         thing->markIfUnmarked(gc::BLACK);
-    else
-        DoCallback(trc->asCallbackTracer(), ConvertToBase(&thing), name);
+    else if(trc->isCallbackTracer())
+		DoCallback(trc->asCallbackTracer(), ConvertToBase(&thing), name);
+	else
+		return static_cast<omrjs::OMRGCMarker*>(trc)->traverse(ConvertToBase(&thing));
 }
 template void js::TraceProcessGlobalRoot<JSAtom>(JSTracer*, JSAtom*, const char*);
 template void js::TraceProcessGlobalRoot<JS::Symbol>(JSTracer*, JS::Symbol*, const char*);
