@@ -520,11 +520,14 @@ GCMarker::delayMarkingChildren(const void* thing)
 }
 
 AutoDisableCompactingGC::AutoDisableCompactingGC(JSContext* cx)
+    : gc(cx->gc)
 {
+	gc.disable();
 }
 
 AutoDisableCompactingGC::~AutoDisableCompactingGC()
 {
+	gc.enable();
 }
 
 static const AllocKind AllocKindsToRelocate[] = {
@@ -1390,6 +1393,7 @@ JS::SetGCNurseryCollectionCallback(JSContext* cx, GCNurseryCollectionCallback ca
 JS_PUBLIC_API(void)
 JS::DisableIncrementalGC(JSContext* cx)
 {
+	//cx->gc.disable();
 }
 
 JS_PUBLIC_API(bool)
@@ -1436,11 +1440,14 @@ JS::WasIncrementalGC(JSContext* cx)
 }
 
 JS::AutoDisableGenerationalGC::AutoDisableGenerationalGC(JSRuntime* rt)
+    : gc(&rt->gc)
 {
+	gc->disable();
 }
 
 JS::AutoDisableGenerationalGC::~AutoDisableGenerationalGC()
 {
+	gc->enable();
 }
 
 JS_PUBLIC_API(bool)

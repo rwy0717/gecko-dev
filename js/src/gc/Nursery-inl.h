@@ -30,7 +30,7 @@ template <typename T>
 static inline T*
 AllocateObjectBuffer(ExclusiveContext* cx, uint32_t count)
 {
-	return (T *)OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, sizeof(T) * count, 0);
+	return (T *)malloc(sizeof(T) * count);
 }
 
 template <typename T>

@@ -124,9 +124,21 @@ Allocate<js::ObjectGroup, NoGC>(ExclusiveContext* cx) {
 	return Allocate<js::ObjectGroup, NoGC>(cx, gc::AllocKind::OBJECT_GROUP);
 }
 
+template <>
+js::Scope*
+Allocate<js::Scope, CanGC>(ExclusiveContext* cx) {
+	return Allocate<js::Scope, CanGC>(cx, gc::AllocKind::SCOPE);
+}
+template <>
+js::Scope*
+Allocate<js::Scope, NoGC>(ExclusiveContext* cx) {
+	return Allocate<js::Scope, NoGC>(cx, gc::AllocKind::SCOPE);
+}
+
 template <typename T, AllowGC allowGC /* = CanGC */>
 T*
 Allocate(ExclusiveContext* cx) {
+	MOZ_ASSERT(false);
 	return Allocate<T, allowGC>(cx, gc::AllocKind::FIRST);
 }
 
@@ -135,7 +147,7 @@ T*
 Allocate(ExclusiveContext* cx, gc::AllocKind kind) {
 	JSContext* ncx = cx->asJSContext();
 	JSRuntime* rt = ncx->runtime();
-	Cell* obj = rt->gc.nursery.allocateObject(ncx, sizeof(T), 0, nullptr, allowGC == CanGC);
+	Cell* obj = rt->gc.nursery.allocateObject(ncx, sizeof(T), 0, nullptr, (allowGC == CanGC) && (rt->gc.enabled == 0));
 	obj->setAllocKind(kind);
 	return (T*)obj;
 }
@@ -155,7 +167,7 @@ js::Allocate(ExclusiveContext* cx, gc::AllocKind kind, size_t nDynamicSlots, gc:
          const Class* clasp) {
 	JSContext* ncx = cx->asJSContext();
 	JSRuntime* rt = ncx->runtime();
-	JSObject* obj = rt->gc.nursery.allocateObject(ncx, OmrGcHelper::thingSize(kind), nDynamicSlots, clasp, allowGC == CanGC);
+	JSObject* obj = rt->gc.nursery.allocateObject(ncx, OmrGcHelper::thingSize(kind), nDynamicSlots, clasp, (allowGC == CanGC) && (rt->gc.enabled == 0));
 	obj->setAllocKind(kind);
 	return obj;
 }

@@ -58,7 +58,8 @@ class GCRuntime
 {
   public:
     explicit GCRuntime(JSRuntime* rt)
-        : number(0),
+        : enabled(0),
+		number(0),
 		rt(rt),
 		nursery(rt),
 #ifndef OMR
@@ -68,6 +69,10 @@ class GCRuntime
         marker(rt),
         usage(nullptr)
         { }
+
+    uint32_t enabled;
+	void disable() { --enabled; }
+	void enable() { ++enabled; }
     
     MOZ_MUST_USE bool init(uint32_t maxbytes, uint32_t maxNurseryBytes);
 	void finishRoots();

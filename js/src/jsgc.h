@@ -775,6 +775,9 @@ struct MOZ_RAII AutoDisableCompactingGC
 {
     explicit AutoDisableCompactingGC(JSContext* cx);
     ~AutoDisableCompactingGC();
+
+  private:
+    gc::GCRuntime& gc;
 };
 
 // This is the same as IsInsideNursery, but not inlined.
