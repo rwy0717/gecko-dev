@@ -40,6 +40,7 @@
 #include "vm/UnboxedObject-inl.h"
 
 #include "../glue/omrglue.hpp"
+#include "../omr/gc/base/standard/ParallelGlobalGC.hpp"
 
 using namespace js;
 using namespace js::gc;
@@ -519,12 +520,12 @@ js::TraceProcessGlobalRoot(JSTracer* trc, T* thing, const char* name)
     // be marked directly.  Moreover, well-known symbols can refer only to
     // permanent atoms, so likewise require no subsquent marking.
     CheckTracedThing(trc, *ConvertToBase(&thing));
-    if (trc->isMarkingTracer())
+	if (trc->isOmrMarkingTracer())
+		return static_cast<omrjs::OMRGCMarker*>(trc)->traverse(ConvertToBase(&thing));
+    else if (trc->isMarkingTracer())
         thing->markIfUnmarked(gc::BLACK);
     else if(trc->isCallbackTracer())
 		DoCallback(trc->asCallbackTracer(), ConvertToBase(&thing), name);
-	else
-		return static_cast<omrjs::OMRGCMarker*>(trc)->traverse(ConvertToBase(&thing));
 }
 template void js::TraceProcessGlobalRoot<JSAtom>(JSTracer*, JSAtom*, const char*);
 template void js::TraceProcessGlobalRoot<JS::Symbol>(JSTracer*, JS::Symbol*, const char*);
@@ -580,14 +581,14 @@ DispatchToTracer(JSTracer* trc, T* thingp, const char* name)
             mozilla::IsSame<T, TaggedProto>::value,
             "Only the base cell layout types are allowed into marking/tracing internals");
 #undef IS_SAME_TYPE_OR
-    if (trc->isMarkingTracer())
+	if (trc->isOmrMarkingTracer())
+		return static_cast<omrjs::OMRGCMarker*>(trc)->traverse(thingp);
+    else if (trc->isMarkingTracer())
         return DoMarking(static_cast<GCMarker*>(trc), *thingp);
     else if (trc->isTenuringTracer())
         return static_cast<TenuringTracer*>(trc)->traverse(thingp);
     else if(trc->isCallbackTracer())
 		DoCallback(trc->asCallbackTracer(), thingp, name);
-	else
-		return static_cast<omrjs::OMRGCMarker*>(trc)->traverse(thingp);
 }
 
 
@@ -1311,7 +1312,7 @@ js::ObjectGroup::traceChildren(JSTracer* trc)
     if (proto().isObject())
         TraceEdge(trc, &proto(), "group_proto");
 
-    if (trc->isMarkingTracer())
+    if (trc->isMarkingTracer() || trc->isOmrMarkingTracer())
         compartment()->mark();
 
     if (JSObject* global = compartment()->unsafeUnbarrieredMaybeGlobal())
@@ -2209,7 +2210,8 @@ static bool
 IsMarkedInternalCommon(T* thingp)
 {
     CheckIsMarkedThing(thingp);
-    return (*thingp)->asTenured().isMarked();
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(Nursery::omrVMThread);
+	return ((MM_ParallelGlobalGC*)env->getExtensions()->getGlobalCollector())->getMarkingScheme()->isMarked((omrobjectptr_t)thingp);
 }
 
 template <typename T>
@@ -2247,7 +2249,7 @@ template <typename T>
 static bool
 IsAboutToBeFinalizedInternal(T** thingp)
 {
-    return false;
+    return IsMarkedInternal(thingp);
 }
 
 template <typename S>

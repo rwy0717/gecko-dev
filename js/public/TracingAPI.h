@@ -80,8 +80,9 @@ class JS_PUBLIC_API(JSTracer)
         // General-purpose traversal that invokes a callback on each cell.
         // Traversing children is the responsibility of the callback.
         Callback,
-	OMR_SCAN
+        OMR_SCAN
     };
+	bool isOmrMarkingTracer() const { return tag_ == TracerKindTag::OMR_SCAN; }
     bool isMarkingTracer() const { return tag_ == TracerKindTag::Marking || tag_ == TracerKindTag::WeakMarking; }
     bool isWeakMarkingTracer() const { return tag_ == TracerKindTag::WeakMarking; }
     bool isTenuringTracer() const { return tag_ == TracerKindTag::Tenuring; }

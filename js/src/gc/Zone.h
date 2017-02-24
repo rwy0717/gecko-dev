@@ -214,6 +214,7 @@ struct Zone : public JS::shadow::Zone,
     // List of non-ephemeron weak containers to sweep during beginSweepingZoneGroup.
     mozilla::LinkedList<WeakCache<void*>> weakCaches_;
     void registerWeakCache(WeakCache<void*>* cachep) {
+        weakCaches_.insertBack(cachep);
     }
 
     /*

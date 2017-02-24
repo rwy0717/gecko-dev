@@ -314,6 +314,21 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_scanRoots(MM_EnvironmentBase *e
 		rt->gc.traceRuntimeAtoms(_omrGCMarker, session.lock);
 		// JSCompartment::traceIncomingCrossCompartmentEdgesForZoneGC(trc);
 		rt->gc.traceRuntimeCommon(_omrGCMarker, js::gc::GCRuntime::TraceOrMarkRuntime::TraceRuntime, session.lock);
+
+		//for (GCZoneGroupIter zone(rt); !zone.done(); zone.next()) {
+		Zone *zone = rt->contextFromMainThread()->zone();
+		for (WeakMapBase* m : zone->gcWeakMapList) {
+			m->trace(_omrGCMarker);
+		}
+		/*for (JS::WeakCache<void*>* cache : zone->weakCaches_) {
+			cache->trace(_omrGCMarker);
+		}*/
+		for (WeakMapBase* m : zone->gcWeakMapList) {
+			m->sweep();
+		}
+		for (JS::WeakCache<void*>* cache : zone->weakCaches_) {
+			cache->sweep();
+		}
 	}
 }
 

@@ -536,19 +536,19 @@ Cell::asTenured()
 inline JSRuntime*
 Cell::runtimeFromMainThread() const
 {
-    return nullptr;
+    return reinterpret_cast<JS::shadow::Zone*>(zone())->runtimeFromMainThread();
 }
 
 inline JS::shadow::Runtime*
 Cell::shadowRuntimeFromMainThread() const
 {
-    return nullptr;
+    return reinterpret_cast<JS::shadow::Runtime*>(runtimeFromMainThread());
 }
 
 inline JSRuntime*
 Cell::runtimeFromAnyThread() const
 {
-    return nullptr;
+    return reinterpret_cast<JS::shadow::Zone*>(zone())->runtimeFromAnyThread();
 }
 inline JS::Zone*
 Cell::zoneFromAnyThread() const
@@ -567,13 +567,13 @@ Cell::zone() const
 inline JS::shadow::Runtime*
 Cell::shadowRuntimeFromAnyThread() const
 {
-    return nullptr;
+    return reinterpret_cast<JS::shadow::Runtime*>(runtimeFromAnyThread());
 }
 
 inline uintptr_t
 Cell::address() const
 {
-	return 0;
+	return uintptr_t(this);
 }
 
 #ifndef OMR // Disable Chunks, write barriers
@@ -644,13 +644,13 @@ Cell::needWriteBarrierPre(JS::Zone* zone) {
 /* static */ MOZ_ALWAYS_INLINE TenuredCell*
 TenuredCell::fromPointer(void* ptr)
 {
-    return nullptr;
+    return static_cast<TenuredCell*>(ptr);
 }
 
 /* static */ MOZ_ALWAYS_INLINE const TenuredCell*
 TenuredCell::fromPointer(const void* ptr)
 {
-    return nullptr;
+    return static_cast<const TenuredCell*>(ptr);
 }
 
 bool
@@ -683,7 +683,6 @@ TenuredCell::arena() const
 }
 #endif // ! OMR
 
-// OMRTODO: What is a trace kind?
 JS::TraceKind
 TenuredCell::getTraceKind() const
 {

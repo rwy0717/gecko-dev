@@ -58,6 +58,7 @@ Zone::~Zone()
 JS_PUBLIC_API(void)
 JS::shadow::RegisterWeakCache(JS::Zone* zone, WeakCache<void*>* cachep)
 {
+    zone->registerWeakCache(cachep);
 }
 
 js::jit::JitZone*

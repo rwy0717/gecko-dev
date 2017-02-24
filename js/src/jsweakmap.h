@@ -78,7 +78,7 @@ class WeakMapBase : public mozilla::LinkedListElement<WeakMapBase>
     // Restore information about which weak maps are marked for many zones.
     static void restoreMarkedWeakMaps(WeakMapSet& markedWeakMaps);
 
-  protected:
+  public:
     // Instance member functions called by the above. Instantiations of WeakMap override
     // these with definitions appropriate for their Key and Value types.
     virtual void trace(JSTracer* tracer) = 0;
@@ -200,13 +200,13 @@ class WeakMap : public HashMap<Key, Value, HashPolicy, RuntimeAllocPolicy>,
     void trace(JSTracer* trc) override {
         MOZ_ASSERT(isInList());
 
-        if (trc->isMarkingTracer())
+        if (trc->isMarkingTracer() || trc->isOmrMarkingTracer())
             marked = true;
 
         if (trc->weakMapAction() == DoNotTraceWeakMaps)
             return;
 
-        if (!trc->isMarkingTracer()) {
+        if (!trc->isMarkingTracer() && !trc->isOmrMarkingTracer()) {
             // Trace keys only if weakMapAction() says to.
             if (trc->weakMapAction() == TraceWeakMapKeysValues) {
                 for (Enum e(*this); !e.empty(); e.popFront())
@@ -226,7 +226,7 @@ class WeakMap : public HashMap<Key, Value, HashPolicy, RuntimeAllocPolicy>,
         (void) traceEntries(trc);
     }
 
-  protected:
+  public:
     static void addWeakEntry(JSTracer* trc, JS::GCCellPtr key, gc::WeakMarkable markable)
     {
         GCMarker& marker = *static_cast<GCMarker*>(trc);
@@ -295,7 +295,7 @@ class WeakMap : public HashMap<Key, Value, HashPolicy, RuntimeAllocPolicy>,
         return nullptr;
     }
 
-  private:
+  public:
     void exposeGCThingToActiveJS(const JS::Value& v) const { JS::ExposeValueToActiveJS(v); }
     void exposeGCThingToActiveJS(JSObject* obj) const { JS::ExposeObjectToActiveJS(obj); }
 

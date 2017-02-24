@@ -117,7 +117,7 @@ struct GCPolicy<js::HeapPtr<T>>
         js::TraceEdge(trc, thingp, name);
     }
     static bool needsSweep(js::HeapPtr<T>* thingp) {
-        return false;
+        return js::gc::IsAboutToBeFinalized(thingp);
     }
 };
 
@@ -128,7 +128,7 @@ struct GCPolicy<js::ReadBarriered<T>>
         js::TraceEdge(trc, thingp, name);
     }
     static bool needsSweep(js::ReadBarriered<T>* thingp) {
-        return false;
+        return js::gc::IsAboutToBeFinalized(thingp);
     }
 };
 
