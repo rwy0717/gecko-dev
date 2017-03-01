@@ -1282,7 +1282,18 @@ JS::GCTraceKindToAscii(JS::TraceKind kind)
 }
 
 JS::GCCellPtr::GCCellPtr(const Value& v)
+  : ptr(0)
 {
+    if (v.isString())
+        ptr = checkedCast(v.toString(), JS::TraceKind::String);
+    else if (v.isObject())
+        ptr = checkedCast(&v.toObject(), JS::TraceKind::Object);
+    else if (v.isSymbol())
+        ptr = checkedCast(v.toSymbol(), JS::TraceKind::Symbol);
+    else if (v.isPrivateGCThing())
+        ptr = checkedCast(v.toGCThing(), v.toGCThing()->getTraceKind());
+    else
+        ptr = checkedCast(nullptr, JS::TraceKind::Null);
 }
 
 JS::TraceKind

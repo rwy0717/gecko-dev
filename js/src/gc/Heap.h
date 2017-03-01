@@ -609,6 +609,8 @@ Cell::getTraceKind() const
 		case AllocKind::OBJECT12_BACKGROUND:
 		case AllocKind::OBJECT16:
 		case AllocKind::OBJECT16_BACKGROUND:
+		case AllocKind::FUNCTION:
+		case AllocKind::FUNCTION_EXTENDED:
 			return JS::TraceKind::Object;
 		case AllocKind::SCRIPT:
 			return JS::TraceKind::Script;

@@ -85,7 +85,6 @@ private:
 
 template <typename T> inline void OMRGCMarker::traverse(T *thing) { assert(0); }
 template <typename T> inline void OMRGCMarker::traverse(T **thing) { traverse(*thing); }
-template <> inline void OMRGCMarker::traverse(JS::Value* thing) {}
 template <> inline void OMRGCMarker::traverse(jsid* thing) {}
 template <> inline void OMRGCMarker::traverse(js::TaggedProto* thing) {}
 template <> inline void OMRGCMarker::traverse(BaseShape* thing) { mark(thing); }
@@ -98,6 +97,23 @@ template <> inline void OMRGCMarker::traverse(JSObject* thing) { mark(thing); }
 template <> inline void OMRGCMarker::traverse(ObjectGroup* thing) { mark(thing); }
 template <> inline void OMRGCMarker::traverse(jit::JitCode* thing) { mark(thing); }
 template <> inline void OMRGCMarker::traverse(JSScript* thing) { mark(thing); }
+
+template <> inline void OMRGCMarker::traverse(JS::Value* thing) {
+	const Value& v = *thing;
+	if (v.isString()) {
+		JSString* string = v.toString();
+		traverse(string);
+	} else if (v.isObject()) {
+		JSObject* obj = &v.toObject();
+		traverse(obj);
+	} else if (v.isSymbol()) {
+		JS::Symbol* sym = v.toSymbol();
+		traverse(sym);
+	} else if (v.isPrivateGCThing()) {
+		js::gc::Cell *cell = v.toGCCellPtr().asCell();
+		_markingScheme->markObject(_env, (omrobjectptr_t)cell, false);
+	}
+}
 
 } // namespace omrjs
 
