@@ -83,6 +83,7 @@ struct StructGCPolicy
     }
 
     static void trace(JSTracer* trc, T* tp, const char* name) {
+        tp->trace(trc);
     }
 
     static void sweep(T* tp) {
@@ -133,7 +134,7 @@ struct GCPolicy<JS::Heap<T>>
         TraceEdge(trc, thingp, name);
     }
     static bool needsSweep(JS::Heap<T>* thingp) {
-        return false;
+        return js::gc::EdgeNeedsSweep(thingp);
     }
 };
 

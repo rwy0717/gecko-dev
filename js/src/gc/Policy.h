@@ -108,7 +108,29 @@ class JitCode;
     FOR_EACH_INTERNAL_GC_POINTER_TYPE(D) \
     FOR_EACH_INTERNAL_TAGGED_GC_POINTER_TYPE(D)
 
+namespace js {
+
+// Define the GCPolicy for all internal pointers.
+template <typename T>
+struct InternalGCPointerPolicy {
+    using Type = typename mozilla::RemovePointer<T>::Type;
+    static T initial() { return nullptr; }
+    static void preBarrier(T v) { Type::writeBarrierPre(v); }
+    static void postBarrier(T* vp, T prev, T next) { Type::writeBarrierPost(vp, prev, next); }
+    static void readBarrier(T v) { Type::readBarrier(v); }
+    static void trace(JSTracer* trc, T* vp, const char* name) {
+        TraceManuallyBarrieredEdge(trc, vp, name);
+    }
+};
+
+} // namespace js
+
 namespace JS {
+
+#define DEFINE_INTERNAL_GC_POLICY(type) \
+    template <> struct GCPolicy<type> : public js::InternalGCPointerPolicy<type> {};
+FOR_EACH_INTERNAL_GC_POINTER_TYPE(DEFINE_INTERNAL_GC_POLICY)
+#undef DEFINE_INTERNAL_GC_POLICY
 
 template <typename T>
 struct GCPolicy<js::HeapPtr<T>>
