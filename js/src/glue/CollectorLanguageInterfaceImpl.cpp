@@ -42,6 +42,7 @@
 #include "SlotObject.hpp"
 
 /// Spidermonkey Headers
+#include "gc/Policy.h"
 #include "js/TracingAPI.h"
 
 // JS
