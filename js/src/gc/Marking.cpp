@@ -389,6 +389,27 @@ js::UnsafeTraceManuallyBarrieredEdge(JSTracer* trc, T* thingp, const char* name)
 
 template <typename T>
 void
+NoteWeakEdge(GCMarker* gcmarker, T** thingp)
+{
+
+    CheckTracedThing(gcmarker, *thingp);
+
+    // If the target is already marked, there's no need to store the edge.
+    if (IsMarkedUnbarriered(thingp))
+        return;
+
+    gcmarker->noteWeakEdge(thingp);
+}
+
+template <typename T>
+void
+NoteWeakEdge(GCMarker* gcmarker, T* thingp)
+{
+    MOZ_CRASH("the gc does not support tagged pointers as weak edges");
+}
+
+template <typename T>
+void
 js::TraceWeakEdge(JSTracer* trc, WeakRef<T>* thingp, const char* name)
 {
     // Non-marking tracers treat the edge strongly.
@@ -736,30 +757,6 @@ void
 DoMarking(GCMarker* gcmarker, const T& thing)
 {
     DispatchTyped(DoMarkingFunctor<T>(), thing, gcmarker);
-}
-
-template <typename T>
-void
-NoteWeakEdge(GCMarker* gcmarker, T** thingp)
-{
-    // Do per-type marking precondition checks.
-    if (MustSkipMarking(*thingp))
-        return;
-
-    CheckTracedThing(gcmarker, *thingp);
-
-    // If the target is already marked, there's no need to store the edge.
-    if (IsMarkedUnbarriered(thingp))
-        return;
-
-    gcmarker->noteWeakEdge(thingp);
-}
-
-template <typename T>
-void
-NoteWeakEdge(GCMarker* gcmarker, T* thingp)
-{
-    MOZ_CRASH("the gc does not support tagged pointers as weak edges");
 }
 
 template <typename T>
