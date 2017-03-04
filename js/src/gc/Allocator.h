@@ -9,6 +9,7 @@
 
 #include "gc/Heap.h"
 #include "js/RootingAPI.h"
+#include "vm/Shape.h"
 
 namespace js {
 struct Class;
