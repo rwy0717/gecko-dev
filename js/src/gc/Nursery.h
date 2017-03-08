@@ -86,7 +86,7 @@ class Nursery
     explicit Nursery(JSRuntime* rt) {}
     ~Nursery() {}
 
-    MOZ_MUST_USE bool init(uint32_t maxNurseryBytes, AutoLockGC& lock) { return true; }
+    MOZ_MUST_USE bool init(uint32_t maxNurseryBytes, AutoLockGC& lock) { return cellsWithUid_.init(); }
 
     bool exists() const { return false; }
     size_t nurserySize() const { return 0; }
@@ -152,6 +152,12 @@ class Nursery
     void removeMallocedBuffer(void* buffer) {
     }
 
+    MOZ_MUST_USE bool addedUniqueIdToCell(gc::Cell* cell) {
+        MOZ_ASSERT(cellsWithUid_.initialized());
+        MOZ_ASSERT(!cellsWithUid_.has(cell));
+        return cellsWithUid_.put(cell);
+    }
+
     using SweepThunk = void (*)(void *data);
 
     MOZ_MUST_USE bool queueDictionaryModeObjectToSweep(NativeObject* obj) { return true; }
@@ -164,6 +170,21 @@ class Nursery
     }
 
   private:
+    /*
+     * When we assign a unique id to cell in the nursery, that almost always
+     * means that the cell will be in a hash table, and thus, held live,
+     * automatically moving the uid from the nursery to its new home in
+     * tenured. It is possible, if rare, for an object that acquired a uid to
+     * be dead before the next collection, in which case we need to know to
+     * remove it when we sweep.
+     *
+     * Note: we store the pointers as Cell* here, resulting in an ugly cast in
+     *       sweep. This is because this structure is used to help implement
+     *       stable object hashing and we have to break the cycle somehow.
+     */
+    using CellsWithUniqueIdSet = HashSet<gc::Cell*, PointerHasher<gc::Cell*, 3>, SystemAllocPolicy>;
+    CellsWithUniqueIdSet cellsWithUid_;
+
     /*
      * The start and end pointers are stored under the runtime so that we can
      * inline the isInsideNursery check into embedder code. Use the start()

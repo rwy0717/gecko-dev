@@ -370,10 +370,11 @@ static const uint64_t JIT_SCRIPT_RELEASE_TYPES_PERIOD = 20;
 bool
 GCRuntime::init(uint32_t maxbytes, uint32_t maxNurseryBytes)
 {
-	if (!rootsHash.init(256))
-		return false;
+    if (!rootsHash.init(256))
+        return false;
 
-    return true;
+    AutoLockGC lock(rt);
+    return nursery.init(maxNurseryBytes, lock);
 }
 
 void
@@ -1465,6 +1466,12 @@ JS_PUBLIC_API(bool)
 JS::IsGenerationalGCEnabled(JSRuntime* rt)
 {
 	return false;
+}
+
+uint64_t
+js::gc::NextCellUniqueId(JSRuntime* rt)
+{
+    return rt->gc.nextCellUniqueId();
 }
 
 namespace js {

@@ -67,7 +67,8 @@ class GCRuntime
 #endif // OMR
         stats(rt),
         marker(rt),
-        usage(nullptr)
+        usage(nullptr),
+        nextCellUniqueId_(LargestTaggedNullCellPointer + 1) // Ensure disjoint from null tagged pointers.
         { }
 
     uint32_t enabled;
@@ -123,6 +124,12 @@ class GCRuntime
 	bool selectForMarking(JSObject* object);
 	void setDeterministic(bool enable);
 #endif
+
+    uint64_t nextCellUniqueId() {
+        MOZ_ASSERT(nextCellUniqueId_ > 0);
+        uint64_t uid = ++nextCellUniqueId_;
+        return uid;
+    }
 
 #ifdef DEBUG
     bool shutdownCollectedEverything() const {
@@ -258,6 +265,9 @@ class GCRuntime
 	
 	bool hasZealMode(ZealMode mode) { return false; }
 	bool upcomingZealousGC() { return false; }
+
+    // An incrementing id used to assign unique ids to cells that require one.
+    mozilla::Atomic<uint64_t, mozilla::ReleaseAcquire> nextCellUniqueId_;
 
   private:
     // Gray marking must be done after all black marking is complete. However,

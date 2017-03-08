@@ -37,6 +37,19 @@ struct ZoneComponentFinder : public ComponentFinder<JS::Zone, ZoneComponentFinde
     AutoLockForExclusiveAccess& lock;
 };
 
+struct UniqueIdGCPolicy {
+    static bool needsSweep(Cell** cell, uint64_t* value);
+};
+
+// Maps a Cell* to a unique, 64bit id.
+using UniqueIdMap = GCHashMap<Cell*,
+                              uint64_t,
+                              PointerHasher<Cell*, 3>,
+                              SystemAllocPolicy,
+                              UniqueIdGCPolicy>;
+
+extern uint64_t NextCellUniqueId(JSRuntime* rt);
+
 template <typename T>
 class ZoneCellIter;
 
@@ -95,7 +108,9 @@ struct Zone : public JS::shadow::Zone,
     explicit Zone(JSRuntime* rt);
 	
     ~Zone();
-    MOZ_MUST_USE bool init(bool isSystem) { return true; }
+    MOZ_MUST_USE bool init(bool isSystem) { 
+	    return uniqueIds_.init();
+    }
 
     void discardJitCode(js::FreeOp* fop) {}
 
@@ -170,6 +185,9 @@ struct Zone : public JS::shadow::Zone,
 
   private:
     js::jit::JitZone* createJitZone(JSContext* cx);
+
+    // Side map for storing a unique ids for cells, independent of address.
+    js::gc::UniqueIdMap uniqueIds_;
 
   public:
     bool hasDebuggers() const { return true; }
@@ -296,12 +314,39 @@ struct Zone : public JS::shadow::Zone,
 
     // Creates a HashNumber based on getUniqueId. Returns false on OOM.
     MOZ_MUST_USE bool getHashCode(js::gc::Cell* cell, js::HashNumber* hashp) {
+        uint64_t uid;
+        if (!getUniqueId(cell, &uid))
+            return false;
+        *hashp = UniqueIdToHash(uid);
         return true;
     }
 
     // Puts an existing UID in |uidp|, or creates a new UID for this Cell and
     // puts that into |uidp|. Returns false on OOM.
     MOZ_MUST_USE bool getUniqueId(js::gc::Cell* cell, uint64_t* uidp) {
+        MOZ_ASSERT(uidp);
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
+
+        // Get an existing uid, if one has been set.
+        auto p = uniqueIds_.lookupForAdd(cell);
+        if (p) {
+            *uidp = p->value();
+            return true;
+        }
+
+        // Set a new uid on the cell.
+        *uidp = js::gc::NextCellUniqueId(runtimeFromAnyThread());
+        if (!uniqueIds_.add(p, cell, *uidp))
+            return false;
+
+        // If the cell was in the nursery, hopefully unlikely, then we need to
+        // tell the nursery about it so that it can sweep the uid if the thing
+        // does not get tenured.
+        if (!runtimeFromAnyThread()->gc.nursery.addedUniqueIdToCell(cell)) {
+            uniqueIds_.remove(cell);
+            return false;
+        }
+
         return true;
     }
 
@@ -310,30 +355,49 @@ struct Zone : public JS::shadow::Zone,
     }
 
     uint64_t getUniqueIdInfallible(js::gc::Cell* cell) {
-        return 0;
+        uint64_t uid;
+        js::AutoEnterOOMUnsafeRegion oomUnsafe;
+        if (!getUniqueId(cell, &uid))
+            oomUnsafe.crash("failed to allocate uid");
+        return uid;
     }
 
     // Return true if this cell has a UID associated with it.
     MOZ_MUST_USE bool hasUniqueId(js::gc::Cell* cell) {
-        return true;
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
+        return uniqueIds_.has(cell);
     }
 
     // Transfer an id from another cell. This must only be called on behalf of a
     // moving GC. This method is infallible.
     void transferUniqueId(js::gc::Cell* tgt, js::gc::Cell* src) {
+		MOZ_ASSERT(src != tgt);
+        MOZ_ASSERT(!IsInsideNursery(tgt));
+        MOZ_ASSERT(CurrentThreadCanAccessRuntime(runtimeFromMainThread()));
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
+        uniqueIds_.rekeyIfMoved(src, tgt);
     }
 
     // Remove any unique id associated with this Cell.
     void removeUniqueId(js::gc::Cell* cell) {
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
+        uniqueIds_.remove(cell);
     }
 
     // When finished parsing off-thread, transfer any UIDs we created in the
     // off-thread zone into the target zone.
     void adoptUniqueIds(JS::Zone* source) {
+        js::AutoEnterOOMUnsafeRegion oomUnsafe;
+        for (js::gc::UniqueIdMap::Enum e(source->uniqueIds_); !e.empty(); e.popFront()) {
+            MOZ_ASSERT(!uniqueIds_.has(e.front().key()));
+            if (!uniqueIds_.put(e.front().key(), e.front().value()))
+                oomUnsafe.crash("failed to transfer unique ids from off-main-thread");
+        }
+        source->uniqueIds_.clear();
     }
 
     JSContext* contextFromMainThread() {
-        return nullptr;
+        return runtime_->contextFromMainThread();
     }
 
 #ifdef JSGC_HASH_TABLE_CHECKS

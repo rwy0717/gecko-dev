@@ -42,7 +42,6 @@
 #include "SlotObject.hpp"
 
 /// Spidermonkey Headers
-#include "gc/Policy.h"
 #include "js/TracingAPI.h"
 
 // JS
@@ -75,12 +74,17 @@
 #include "jsgcinlines.h"
 #include "jsobjinlines.h"
 
+// Spidermonkey Headers
+
 #include "gc/Nursery-inl.h"
 #include "vm/String-inl.h"
 #include "vm/UnboxedObject-inl.h"
 
 #include "gc/Barrier.h"
 #include "gc/Marking.h"
+
+#include "js/TracingAPI.h"
+#include "js/GCPolicyAPI.h"
 
 // OMR
 #include "omrglue.hpp"
@@ -228,15 +232,6 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_scanRoots(MM_EnvironmentBase *e
 		Zone *zone = rt->contextFromMainThread()->zone();
 		for (WeakMapBase* m : zone->gcWeakMapList) {
 			m->trace(_omrGCMarker);
-		}
-		/*for (JS::WeakCache<void*>* cache : zone->weakCaches_) {
-			cache->trace(_omrGCMarker);
-		}*/
-		for (WeakMapBase* m : zone->gcWeakMapList) {
-			m->sweep();
-		}
-		for (JS::WeakCache<void*>* cache : zone->weakCaches_) {
-			cache->sweep();
 		}
 	}
 }
@@ -504,6 +499,17 @@ MM_CollectorLanguageInterfaceImpl::heapWalker_heapWalkerObjectSlotDo(omrobjectpt
 void
 MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_EnvironmentBase *env)
 {
+	OMR_VM *omrVM = env->getOmrVM();
+	JSRuntime *rt = (JSRuntime *)omrVM->_language_vm;
+	Zone *zone = rt->contextFromMainThread()->zone();
+
+	for (WeakMapBase* m : zone->gcWeakMapList) {
+		m->sweep();
+	}
+	for (JS::WeakCache<void*>* cache : zone->weakCaches_) {
+		cache->sweep();
+	}
+		
 	/* This puts the heap into the state required to walk it */
 	GC_OMRVMInterface::flushCachesForGC(env);
 
