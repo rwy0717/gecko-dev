@@ -28,6 +28,7 @@ JS::Zone::Zone(JSRuntime* rt)
     arenas(rt),
 #endif
     types(this),
+	gcWeakMapList(),
     compartments(),
     gcGrayRoots(),
     typeDescrObjects(this, SystemAllocPolicy()),

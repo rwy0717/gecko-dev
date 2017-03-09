@@ -530,6 +530,7 @@ ObjectGroup::defaultNewGroup(ExclusiveContext* cx, const Class* clasp,
         }
     }
 
+#if 0
     ObjectGroupCompartment::NewTable::AddPtr p =
         table->lookupForAdd(ObjectGroupCompartment::NewEntry::Lookup(clasp, proto, associated));
     if (p) {
@@ -540,6 +541,7 @@ ObjectGroup::defaultNewGroup(ExclusiveContext* cx, const Class* clasp,
         //MOZ_ASSERT(group->proto() == proto);
         return group;
     }
+#endif
 
     ObjectGroupFlags initialFlags = 0;
     if (proto.isDynamic() || (proto.isObject() && proto.toObject()->isNewGroupUnknown()))
@@ -551,10 +553,12 @@ ObjectGroup::defaultNewGroup(ExclusiveContext* cx, const Class* clasp,
     if (!group)
         return nullptr;
 
+#if 0
     if (!table->add(p, ObjectGroupCompartment::NewEntry(group, associated))) {
         ReportOutOfMemory(cx);
         return nullptr;
     }
+#endif
 
     if (proto.isObject()) {
         RootedObject obj(cx, proto.toObject());
