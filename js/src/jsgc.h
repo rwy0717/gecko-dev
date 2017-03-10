@@ -647,14 +647,15 @@ MaybeVerifyBarriers(JSContext* cx, bool always = false)
  */
 class MOZ_RAII JS_HAZ_GC_SUPPRESSED AutoSuppressGC
 {
+
   public:
     explicit AutoSuppressGC(ExclusiveContext* cx);
     explicit AutoSuppressGC(JSCompartment* comp);
     explicit AutoSuppressGC(JSContext* cx);
 
-    ~AutoSuppressGC()
-    {
-    }
+    ~AutoSuppressGC();
+  private:
+    gc::GCRuntime& gc;
 };
 
 struct MOZ_RAII AutoAssertNoNurseryAlloc

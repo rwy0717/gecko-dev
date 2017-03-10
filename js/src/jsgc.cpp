@@ -1183,15 +1183,26 @@ js::ReleaseAllJITCode(FreeOp* fop)
 
 
 AutoSuppressGC::AutoSuppressGC(ExclusiveContext* cx)
+    : gc(cx->asJSContext()->gc)
 {
+    gc.disable();
 }
 
 AutoSuppressGC::AutoSuppressGC(JSCompartment* comp)
+    : gc(comp->zone()->runtimeFromAnyThread()->gc)
 {
+    gc.disable();
 }
 
 AutoSuppressGC::AutoSuppressGC(JSContext* cx)
+    : gc(cx->gc)
 {
+    gc.disable();
+}
+
+AutoSuppressGC::~AutoSuppressGC()
+{
+    gc.enable();
 }
 
 #ifdef DEBUG
