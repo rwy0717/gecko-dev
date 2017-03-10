@@ -499,7 +499,7 @@ MM_CollectorLanguageInterfaceImpl::heapWalker_heapWalkerObjectSlotDo(omrobjectpt
 void
 MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_EnvironmentBase *env)
 {
-	/*OMR_VM *omrVM = env->getOmrVM();
+	OMR_VM *omrVM = env->getOmrVM();
 	JSRuntime *rt = (JSRuntime *)omrVM->_language_vm;
 	Zone *zone = rt->contextFromMainThread()->zone();
 
@@ -510,7 +510,7 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 	// to have entries at Shape.cpp:1569.
 	for (JS::WeakCache<void*>* cache : zone->weakCaches_) {
 		cache->sweep();
-	}*/
+	}
 		
 	/* This puts the heap into the state required to walk it */
 	GC_OMRVMInterface::flushCachesForGC(env);

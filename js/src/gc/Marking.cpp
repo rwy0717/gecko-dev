@@ -2208,7 +2208,7 @@ IsMarkedInternalCommon(T* thingp)
 {
     CheckIsMarkedThing(thingp);
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(Nursery::omrVMThread);
-	return ((MM_ParallelGlobalGC*)env->getExtensions()->getGlobalCollector())->getMarkingScheme()->isMarked((omrobjectptr_t)thingp);
+	return ((MM_ParallelGlobalGC*)env->getExtensions()->getGlobalCollector())->getMarkingScheme()->isMarked((omrobjectptr_t)(*thingp));
 }
 
 template <typename T>
@@ -2246,7 +2246,7 @@ template <typename T>
 static bool
 IsAboutToBeFinalizedInternal(T** thingp)
 {
-    return IsMarkedInternal(thingp);
+    return !IsMarkedInternal(thingp);
 }
 
 template <typename S>

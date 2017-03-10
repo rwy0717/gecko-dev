@@ -1489,7 +1489,6 @@ EmptyShape::new_(ExclusiveContext* cx, Handle<UnownedBaseShape*> base, uint32_t 
 EmptyShape::getInitialShape(ExclusiveContext* cx, const Class* clasp, TaggedProto proto,
                             size_t nfixed, uint32_t objectFlags)
 {
-#if 0
     MOZ_ASSERT_IF(proto.isObject(), cx->isInsideCurrentCompartment(proto.toObject()));
 
     auto& table = cx->zone()->initialShapes;
@@ -1503,7 +1502,6 @@ EmptyShape::getInitialShape(ExclusiveContext* cx, const Class* clasp, TaggedProt
     auto p = MakeDependentAddPtr(cx, table, Lookup(clasp, proto, nfixed, objectFlags));
     if (p)
         return p->shape;
-#endif
 
     Rooted<TaggedProto> protoRoot(cx, proto);
 
@@ -1516,13 +1514,11 @@ EmptyShape::getInitialShape(ExclusiveContext* cx, const Class* clasp, TaggedProt
     if (!shape)
         return nullptr;
 
-#if 0
     Lookup lookup(clasp, protoRoot, nfixed, objectFlags);
     if (!p.add(cx, table, lookup, InitialShapeEntry(shape, protoRoot.get()))) {
         ReportOutOfMemory(cx);
         return nullptr;
     }
-#endif
 
     return shape;
 }
@@ -1566,7 +1562,6 @@ NewObjectCache::invalidateEntriesForShape(JSContext* cx, HandleShape shape, Hand
 /* static */ void
 EmptyShape::insertInitialShape(ExclusiveContext* cx, HandleShape shape, HandleObject proto)
 {
-#if 0
     InitialShapeEntry::Lookup lookup(shape->getObjectClass(), TaggedProto(proto),
                                      shape->numFixedSlots(), shape->getObjectFlags());
 
@@ -1603,7 +1598,6 @@ EmptyShape::insertInitialShape(ExclusiveContext* cx, HandleShape shape, HandleOb
         JSContext* ncx = cx->asJSContext();
         ncx->caches.newObjectCache.invalidateEntriesForShape(ncx, shape, proto);
     }
-#endif
 }
 
 void
