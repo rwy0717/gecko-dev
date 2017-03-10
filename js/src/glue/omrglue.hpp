@@ -85,7 +85,6 @@ private:
 
 template <typename T> inline void OMRGCMarker::traverse(T *thing) { assert(0); }
 template <typename T> inline void OMRGCMarker::traverse(T **thing) { traverse(*thing); }
-template <> inline void OMRGCMarker::traverse(js::TaggedProto* thing) {}
 template <> inline void OMRGCMarker::traverse(BaseShape* thing) { mark(thing); }
 template <> inline void OMRGCMarker::traverse(JS::Symbol* thing) { mark(thing); }
 template <> inline void OMRGCMarker::traverse(JSString* thing) { mark(thing); }
@@ -96,6 +95,12 @@ template <> inline void OMRGCMarker::traverse(JSObject* thing) { mark(thing); }
 template <> inline void OMRGCMarker::traverse(ObjectGroup* thing) { mark(thing); }
 template <> inline void OMRGCMarker::traverse(jit::JitCode* thing) { mark(thing); }
 template <> inline void OMRGCMarker::traverse(JSScript* thing) { mark(thing); }
+
+template <> inline void OMRGCMarker::traverse(js::TaggedProto* thing) {
+	if (thing->isObject()) {
+		traverse(thing->toObject());
+	}
+}
 
 template <> inline void OMRGCMarker::traverse(jsid* thing) {
 	if (JSID_IS_GCTHING(*thing)) {
