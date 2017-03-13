@@ -135,6 +135,17 @@ Allocate<js::Scope, NoGC>(ExclusiveContext* cx) {
 	return Allocate<js::Scope, NoGC>(cx, gc::AllocKind::SCOPE);
 }
 
+template <>
+js::LazyScript*
+Allocate<js::LazyScript, CanGC>(ExclusiveContext* cx) {
+	return Allocate<js::LazyScript, CanGC>(cx, gc::AllocKind::LAZY_SCRIPT);
+}
+template <>
+js::LazyScript*
+Allocate<js::LazyScript, NoGC>(ExclusiveContext* cx) {
+	return Allocate<js::LazyScript, NoGC>(cx, gc::AllocKind::LAZY_SCRIPT);
+}
+
 template <typename T, AllowGC allowGC /* = CanGC */>
 T*
 Allocate(ExclusiveContext* cx) {
