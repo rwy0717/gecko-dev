@@ -206,8 +206,9 @@ js::MarkAtoms(JSTracer* trc, AutoLockForExclusiveAccess& lock)
 
     for (AtomSet::Enum e(rt->atoms(lock)); !e.empty(); e.popFront()) {
         const AtomStateEntry& entry = e.front();
-        if (!entry.isPinned())
-            continue;
+        // OMRTODO: We always collect every zone (there is only one zone)
+        // if (!entry.isPinned())
+        //    continue;
 
         JSAtom* atom = entry.asPtrUnbarriered();
         TraceRoot(trc, &atom, "interned_atom");
