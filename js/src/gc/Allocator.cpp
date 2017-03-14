@@ -179,7 +179,7 @@ js::Allocate(ExclusiveContext* cx, gc::AllocKind kind, size_t nDynamicSlots, gc:
 	JSContext* ncx = cx->asJSContext();
 	JSRuntime* rt = ncx->runtime();
 	JSObject* obj = rt->gc.nursery.allocateObject(ncx, OmrGcHelper::thingSize(kind), nDynamicSlots, clasp, (allowGC == CanGC) && (rt->gc.enabled == 0));
-	obj->setAllocKind(kind);
+	if (obj) obj->setAllocKind(kind);
 	return obj;
 }
 
