@@ -229,7 +229,7 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_scanRoots(MM_EnvironmentBase *e
 		rt->gc.traceRuntimeCommon(_omrGCMarker, js::gc::GCRuntime::TraceOrMarkRuntime::TraceRuntime, session.lock);
 
 		//for (GCZoneGroupIter zone(rt); !zone.done(); zone.next()) {
-		Zone *zone = rt->contextFromMainThread()->zone();
+		Zone *zone = OmrGcHelper::zone;
 		for (WeakMapBase* m : zone->gcWeakMapList) {
 			m->trace(_omrGCMarker);
 		}
@@ -501,7 +501,7 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 {
 	OMR_VM *omrVM = env->getOmrVM();
 	JSRuntime *rt = (JSRuntime *)omrVM->_language_vm;
-	Zone *zone = rt->contextFromMainThread()->zone();
+	Zone *zone = OmrGcHelper::zone;
 
 	for (WeakMapBase* m : zone->gcWeakMapList) {
 		m->sweep();
