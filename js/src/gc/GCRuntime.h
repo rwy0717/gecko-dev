@@ -230,6 +230,8 @@ class GCRuntime
     void markAllWeakReferences(gcstats::Phase phase);
     void markAllGrayReferences(gcstats::Phase phase);
 
+    void callFinalizeCallbacks(FreeOp* fop, JSFinalizeStatus status) const;
+
   public:
     JSRuntime* rt;
 

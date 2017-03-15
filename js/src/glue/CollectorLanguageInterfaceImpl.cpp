@@ -570,8 +570,6 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 		c->sweepTemplateObjects();
 	}
 
-	// zone->sweepWeakMaps();
-
 	// Bug 1071218: the following two methods have not yet been
 	// refactored to work on a single zone-group at once.
 
@@ -591,13 +589,8 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 	zone->sweepUniqueIds(&fop);
 	rt->symbolRegistry(lock).sweep();
 
-	// Queue all GC things in all zones for sweeping, either in the
-	// foreground or on the background thread.
-	//
-	// Note that order is important here for the background case.
-	//
-	// Objects are finalized immediately but this may change in the future.
-
+#if 0
+	// OMRTODO: Reimplement object sweeping
 	zone->arenas.queueForegroundObjectsForSweep(&fop);
 
 	for (unsigned i = 0; i < ArrayLength(IncrementalFinalizePhases); ++i) {
@@ -609,8 +602,9 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 	}
 
 	zone->arenas.queueForegroundThingsForSweep(&fop);
+#endif // 0
 
-	callFinalizeCallbacks(&fop, JSFINALIZE_GROUP_END);
+	rt->gc.callFinalizeCallbacks(&fop, JSFINALIZE_GROUP_END);
 
 
 

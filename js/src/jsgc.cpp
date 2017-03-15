@@ -1621,3 +1621,10 @@ js::PurgeJITCaches(Zone* zone)
     for (auto script = zone->cellIter<JSScript>(); !script.done(); script.next())
         jit::PurgeCaches(script);
 }
+
+void
+GCRuntime::callFinalizeCallbacks(FreeOp* fop, JSFinalizeStatus status) const
+{
+    for (auto& p : finalizeCallbacks)
+        p.op(fop, status, !isFull, p.data);
+}
