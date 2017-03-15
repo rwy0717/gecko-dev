@@ -2979,8 +2979,6 @@ ObjectGroup::detachNewScript(bool writeBarrier, ObjectGroup* replacement)
 void
 ObjectGroup::maybeClearNewScriptOnOOM()
 {
-    MOZ_ASSERT(zone()->isGCSweepingOrCompacting());
-
     if (!isMarked())
         return;
 
@@ -4108,11 +4106,6 @@ ConstraintTypeSet::trace(Zone* zone, JSTracer* trc)
 static inline void
 AssertGCStateForSweep(Zone* zone)
 {
-    MOZ_ASSERT(zone->isGCSweepingOrCompacting());
-
-    // IsAboutToBeFinalized doesn't work right on tenured objects when called
-    // during a minor collection.
-    MOZ_ASSERT(!zone->runtimeFromMainThread()->isHeapMinorCollecting());
 }
 
 void
@@ -4409,7 +4402,6 @@ TypeZone::~TypeZone()
 void
 TypeZone::beginSweep(FreeOp* fop, bool releaseTypes, AutoClearTypeInferenceStateOnOOM& oom)
 {
-    MOZ_ASSERT(zone()->isGCSweepingOrCompacting());
     MOZ_ASSERT(!sweepCompilerOutputs);
     MOZ_ASSERT(!sweepReleaseTypes);
 
