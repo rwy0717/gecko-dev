@@ -439,13 +439,29 @@ class AutoNotifyGCActivity {
 bool
 GCRuntime::addFinalizeCallback(JSFinalizeCallback callback, void* data)
 {
-    return true;
+    return finalizeCallbacks.append(Callback<JSFinalizeCallback>(callback, data));
 }
 
 void
 GCRuntime::removeFinalizeCallback(JSFinalizeCallback callback)
 {
+    for (Callback<JSFinalizeCallback>* p = finalizeCallbacks.begin();
+         p < finalizeCallbacks.end(); p++)
+    {
+        if (p->op == callback) {
+            finalizeCallbacks.erase(p);
+            break;
+        }
+    }
 }
+
+void
+GCRuntime::callFinalizeCallbacks(FreeOp* fop, JSFinalizeStatus status) const
+{
+    for (auto& p : finalizeCallbacks)
+        p.op(fop, status, false, p.data);
+}
+
 
 bool
 GCRuntime::addWeakPointerZoneGroupCallback(JSWeakPointerZoneGroupCallback callback, void* data)

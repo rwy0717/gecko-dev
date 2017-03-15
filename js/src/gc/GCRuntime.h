@@ -302,6 +302,8 @@ class GCRuntime
     bool grayBitsValid;
 
     RootedValueMap rootsHash;
+
+    CallbackVector<JSFinalizeCallback> finalizeCallbacks;
 };
 
 /* Prevent compartments and zones from being collected during iteration. */
