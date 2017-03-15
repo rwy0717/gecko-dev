@@ -525,7 +525,7 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
         c->sweepRegExps();
 
     for (GCCompartmentGroupIter c(rt); !c.done(); c.next())
-        c->sweepRegExps();
+        c->objectGroups.sweep(rt->defaultFreeOp());
 
    	for (GCCompartmentGroupIter c(rt); !c.done(); c.next()) {
         c->sweepSavedStacks();
