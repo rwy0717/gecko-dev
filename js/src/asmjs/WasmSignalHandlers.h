@@ -21,6 +21,8 @@
 
 #include "mozilla/Attributes.h"
 
+#undef XP_DARWIN
+
 #if defined(XP_DARWIN)
 # include <mach/mach.h>
 #endif

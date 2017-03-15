@@ -2242,6 +2242,13 @@ IsMarkedInternal(T* thingp)
     return rv;
 }
 
+
+bool
+js::gc::IsAboutToBeFinalizedDuringSweep(TenuredCell& tenured)
+{
+    return !tenured.isMarked();
+}
+
 template <typename T>
 static bool
 IsAboutToBeFinalizedInternal(T** thingp)

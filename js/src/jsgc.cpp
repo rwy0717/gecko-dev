@@ -1638,9 +1638,3 @@ js::PurgeJITCaches(Zone* zone)
         jit::PurgeCaches(script);
 }
 
-void
-GCRuntime::callFinalizeCallbacks(FreeOp* fop, JSFinalizeStatus status) const
-{
-    for (auto& p : finalizeCallbacks)
-        p.op(fop, status, !isFull, p.data);
-}
