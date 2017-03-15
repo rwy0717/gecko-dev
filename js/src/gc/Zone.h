@@ -112,7 +112,7 @@ struct Zone : public JS::shadow::Zone,
 	    return uniqueIds_.init();
     }
 
-    void discardJitCode(js::FreeOp* fop) {}
+    void discardJitCode(js::FreeOp* fop);
 
     void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                 size_t* typePool,
