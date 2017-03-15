@@ -108,9 +108,7 @@ struct Zone : public JS::shadow::Zone,
     explicit Zone(JSRuntime* rt);
 	
     ~Zone();
-    MOZ_MUST_USE bool init(bool isSystem) { 
-	    return uniqueIds_.init();
-    }
+    MOZ_MUST_USE bool init(bool isSystem);
 
     void discardJitCode(js::FreeOp* fop);
 

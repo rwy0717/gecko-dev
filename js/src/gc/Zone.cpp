@@ -56,6 +56,11 @@ Zone::~Zone()
     js_delete(jitZone_);
 }
 
+MOZ_MUST_USE bool
+Zone::init(bool isSystem) { 
+	return uniqueIds_.init() && gcWeakKeys.init();
+}
+
 JS_PUBLIC_API(void)
 JS::shadow::RegisterWeakCache(JS::Zone* zone, WeakCache<void*>* cachep)
 {
