@@ -534,7 +534,7 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 
 	for (auto edge : zone->gcWeakRefs) {
 		/* Edges may be present multiple times, so may already be nulled. */
-		if (*edge && IsAboutToBeFinalizedDuringSweep(**edge)) {}
+		if (*edge && IsAboutToBeFinalizedDuringSweep(**edge)) {
 			*edge = nullptr;
 		}
 	}
