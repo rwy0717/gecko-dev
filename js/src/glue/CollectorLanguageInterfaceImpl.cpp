@@ -86,6 +86,8 @@
 #include "js/TracingAPI.h"
 #include "js/GCPolicyAPI.h"
 
+#include "jswatchpoint.h"
+
 // OMR
 #include "omrglue.hpp"
 
@@ -511,7 +513,107 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 	for (JS::WeakCache<void*>* cache : zone->weakCaches_) {
 		cache->sweep();
 	}
-		
+	
+	rt->sweepAtoms();
+
+    for (GCCompartmentGroupIter c(rt); !c.done(); c.next()) {
+        c->sweepCrossCompartmentWrappers();
+	}
+
+    for (GCCompartmentGroupIter c(rt); !c.done(); c.next())
+        c->sweepRegExps();
+
+    for (GCCompartmentGroupIter c(rt); !c.done(); c.next())
+        c->sweepRegExps();
+
+   	for (GCCompartmentGroupIter c(rt); !c.done(); c.next()) {
+        c->sweepSavedStacks();
+        c->sweepSelfHostingScriptSource();
+        c->sweepNativeIterators();
+    }
+
+	for (auto edge : zone->gcWeakRefs) {
+		/* Edges may be present multiple times, so may already be nulled. */
+		if (*edge && IsAboutToBeFinalizedDuringSweep(**edge)) {}
+			*edge = nullptr;
+		}
+	}
+    zone->gcWeakRefs.clear();
+
+    /* No need to look up any more weakmap keys from this zone group. */
+    AutoEnterOOMUnsafeRegion oomUnsafe;
+    if (!zone->gcWeakKeys.clear()) {
+            oomUnsafe.crash("clearing weak keys in beginSweepingZoneGroup()");
+    }
+
+	FreeOp fop(rt);
+    
+	// callFinalizeCallbacks(&fop, JSFINALIZE_GROUP_START);
+    // callWeakPointerZoneGroupCallbacks();
+
+    // for (CompartmentsInZoneIter comp(zone); !comp.done(); comp.next())
+    //         callWeakPointerCompartmentCallbacks(comp);
+    // }
+
+	// for (auto& task : sweepCacheTasks) {
+	// 	startTask(task, gcstats::PHASE_SWEEP_MISC, helperLock);
+	// }
+
+	// Cancel any active or pending off thread compilations.
+	js::CancelOffThreadIonCompile(rt, JS::Zone::Sweep);
+
+	for (GCCompartmentGroupIter c(rt); !c.done(); c.next()) {
+		c->sweepGlobalObject(&fop);
+		c->sweepDebugEnvironments();
+		c->sweepJitCompartment(&fop);
+		c->sweepTemplateObjects();
+	}
+
+	// zone->sweepWeakMaps();
+
+	// Bug 1071218: the following two methods have not yet been
+	// refactored to work on a single zone-group at once.
+
+	// Collect watch points associated with unreachable objects.
+	WatchpointMap::sweepAll(rt);
+
+	// Detach unreachable debuggers and global objects from each other.
+	Debugger::sweepAll(&fop);
+
+	// Sweep entries containing about-to-be-finalized JitCode and
+	// update relocated TypeSet::Types inside the JitcodeGlobalTable.
+	jit::JitRuntime::SweepJitcodeGlobalTable(rt);
+	zone->discardJitCode(&fop);
+
+	zone->beginSweepTypes(&fop, !zone->isPreservingCode());
+	zone->sweepBreakpoints(&fop);
+	zone->sweepUniqueIds(&fop);
+	rt->symbolRegistry(lock).sweep();
+
+	// Queue all GC things in all zones for sweeping, either in the
+	// foreground or on the background thread.
+	//
+	// Note that order is important here for the background case.
+	//
+	// Objects are finalized immediately but this may change in the future.
+
+	zone->arenas.queueForegroundObjectsForSweep(&fop);
+
+	for (unsigned i = 0; i < ArrayLength(IncrementalFinalizePhases); ++i) {
+		zone->arenas.queueForForegroundSweep(&fop, IncrementalFinalizePhases[i]);
+	}
+
+	for (unsigned i = 0; i < ArrayLength(BackgroundFinalizePhases); ++i) {
+		zone->arenas.queueForBackgroundSweep(&fop, BackgroundFinalizePhases[i]);
+	}
+
+	zone->arenas.queueForegroundThingsForSweep(&fop);
+
+	callFinalizeCallbacks(&fop, JSFINALIZE_GROUP_END);
+
+
+
+
 	/* This puts the heap into the state required to walk it */
 	GC_OMRVMInterface::flushCachesForGC(env);
 

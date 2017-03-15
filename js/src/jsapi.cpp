@@ -489,7 +489,7 @@ JS_FRIEND_API(bool) JS::isGCEnabled() { return true; }
 
 static omr_error_t InitializeOMR()
 {
-    OMR_Initialize_VM(&Nursery::omrVM, &Nursery::omrVMThread, NULL, NULL);
+    return OMR_Initialize_VM(&Nursery::omrVM, &Nursery::omrVMThread, NULL, NULL);
 }
 #endif /* defined(OMR) */
 

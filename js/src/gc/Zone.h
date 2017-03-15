@@ -163,6 +163,8 @@ struct Zone : public JS::shadow::Zone,
     bool isGCCompacting() { return false; }
     bool isGCSweepingOrCompacting() { return false; }
 
+    void beginSweepTypes(js::FreeOp* fop, bool releaseTypes);
+
     // Get a number that is incremented whenever this zone is collected, and
     // possibly at other times too.
     uint64_t gcNumber() { return runtimeFromMainThread()->gc.gcNumber(); }
@@ -206,10 +208,6 @@ struct Zone : public JS::shadow::Zone,
      * And so on.
      */
     bool suppressAllocationMetadataBuilder;
-
-#ifndef OMR
-    js::gc::ArenaLists arenas;
-#endif // OMR
 
     js::TypeZone types;
 

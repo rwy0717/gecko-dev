@@ -386,6 +386,9 @@ template <typename T>
 bool
 IsAboutToBeFinalized(ReadBarrieredBase<T>* thingp);
 
+bool
+IsAboutToBeFinalizedDuringSweep(TenuredCell& tenured);
+
 inline Cell*
 ToMarkable(const Value& v)
 {
