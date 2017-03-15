@@ -164,6 +164,10 @@ struct Zone : public JS::shadow::Zone,
     bool isGCSweepingOrCompacting() { return false; }
 
     void beginSweepTypes(js::FreeOp* fop, bool releaseTypes);
+    void sweepBreakpoints(js::FreeOp* fop);
+    void sweepUniqueIds(js::FreeOp* fop);
+    void sweepWeakMaps();
+    void sweepCompartments(js::FreeOp* fop, bool keepAtleastOne, bool lastGC);
 
     // Get a number that is incremented whenever this zone is collected, and
     // possibly at other times too.
