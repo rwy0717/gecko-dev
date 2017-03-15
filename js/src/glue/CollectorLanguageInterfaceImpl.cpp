@@ -504,6 +504,7 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 	OMR_VM *omrVM = env->getOmrVM();
 	JSRuntime *rt = (JSRuntime *)omrVM->_language_vm;
 	Zone *zone = OmrGcHelper::zone;
+	js::AutoLockForExclusiveAccess lock(rt);
 
 	for (WeakMapBase* m : zone->gcWeakMapList) {
 		m->sweep();
