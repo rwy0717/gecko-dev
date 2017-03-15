@@ -758,6 +758,18 @@ struct IsAboutToBeFinalizedFunctor {
     }
 };
 
+/* static */ bool
+UniqueIdGCPolicy::needsSweep(Cell** cell, uint64_t*)
+{
+    return DispatchTraceKindTyped(IsAboutToBeFinalizedFunctor(), (*cell)->getTraceKind(), cell);
+}
+
+void
+JS::Zone::sweepUniqueIds(js::FreeOp* fop)
+{
+    uniqueIds_.sweep();
+}
+
 #ifdef DEBUG
 static const char*
 AllocKindToAscii(AllocKind kind)
