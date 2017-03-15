@@ -787,6 +787,9 @@ UninlinedIsInsideNursery(const gc::Cell* cell) {
 	return true;
 }
 
+void
+PurgeJITCaches(JS::Zone* zone);
+
 } /* namespace js */
 
 #endif /* jsgc_h */

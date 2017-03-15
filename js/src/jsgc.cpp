@@ -1613,3 +1613,11 @@ js::gc::Cell::dump() const
 {
 }
 #endif
+
+void
+js::PurgeJITCaches(Zone* zone)
+{
+    /* Discard Ion caches. */
+    for (auto script = zone->cellIter<JSScript>(); !script.done(); script.next())
+        jit::PurgeCaches(script);
+}
