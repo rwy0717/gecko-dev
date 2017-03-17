@@ -509,8 +509,6 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 	for (WeakMapBase* m : zone->gcWeakMapList) {
 		m->sweep();
 	}
-	// TODO: FIX ME. This sweep clears the initialShapes table, which is expected
-	// to have entries at Shape.cpp:1569.
 	for (JS::WeakCache<void*>* cache : zone->weakCaches_) {
 		cache->sweep();
 	}
@@ -606,7 +604,7 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 
 	rt->gc.callFinalizeCallbacks(&fop, JSFINALIZE_GROUP_END);
 
-
+	zone->types.endSweep(rt);
 
 
 	/* This puts the heap into the state required to walk it */

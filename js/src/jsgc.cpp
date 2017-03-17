@@ -735,6 +735,8 @@ GCRuntime::freeUnusedLifoBlocksAfterSweeping(LifoAlloc* lifo)
 void
 GCRuntime::freeAllLifoBlocksAfterSweeping(LifoAlloc* lifo)
 {
+    AutoLockGC lock(rt);
+    lifo->reset(TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
 }
 
 void
