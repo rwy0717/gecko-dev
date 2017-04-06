@@ -730,18 +730,28 @@ GCHelperState::work()
 void
 GCRuntime::freeUnusedLifoBlocksAfterSweeping(LifoAlloc* lifo)
 {
+    /*AutoLockGC lock(rt);
+	LifoAlloc blocksToFreeAfterSweeping(JSRuntime::TEMP_LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
+    blocksToFreeAfterSweeping.transferUnusedFrom(lifo);
+	blocksToFreeAfterSweeping.freeAll();*/
 }
 
 void
 GCRuntime::freeAllLifoBlocksAfterSweeping(LifoAlloc* lifo)
 {
-    AutoLockGC lock(rt);
-    lifo->reset(TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
+    /*AutoLockGC lock(rt);
+	LifoAlloc blocksToFreeAfterSweeping(JSRuntime::TEMP_LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
+    blocksToFreeAfterSweeping.transferFrom(lifo);
+	blocksToFreeAfterSweeping.freeAll();*/
 }
 
 void
 GCRuntime::freeAllLifoBlocksAfterMinorGC(LifoAlloc* lifo)
 {
+    /*MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt));
+	LifoAlloc blocksToFreeAfterMinorGC(JSRuntime::TEMP_LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
+    blocksToFreeAfterMinorGC.transferFrom(lifo);
+	blocksToFreeAfterMinorGC.freeAll();*/
 }
 
 void
@@ -1169,9 +1179,27 @@ js::NewCompartment(JSContext* cx, Zone* zone, JSPrincipals* principals,
         OmrGcHelper::zone = zone;
 #endif
 	}
-	ScopedJSDeletePtr<JSCompartment> compartment(cx->new_<JSCompartment>(zone, options));
-	compartment->init(cx);
-	return compartment.forget();
+    ScopedJSDeletePtr<JSCompartment> compartment(cx->new_<JSCompartment>(zone, options));
+    if (!compartment || !compartment->init(cx))
+        return nullptr;
+
+    // Set up the principals.
+    JS_SetCompartmentPrincipals(compartment, principals);
+
+    AutoLockGC lock(rt);
+
+    if (!zone->compartments.append(compartment.get())) {
+        ReportOutOfMemory(cx);
+        return nullptr;
+    }
+
+    if (zoneHolder && !rt->gc.zones.append(zone)) {
+        ReportOutOfMemory(cx);
+        return nullptr;
+    }
+
+    zoneHolder.forget();
+    return compartment.forget();
 }
 
 void
