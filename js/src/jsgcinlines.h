@@ -198,6 +198,7 @@ class ZoneCellIter : public ZoneCellIter<TenuredCell> {
     // will want to add an overload of this constructor that does the right
     // thing (ie, it empties the nursery before iterating.)
     explicit ZoneCellIter(JS::Zone* zone) : ZoneCellIter<TenuredCell>() {
+        init(zone, MapTypeToFinalizeKind<GCType>::kind);
     }
 
     // Non-nursery allocated, nursery is known to be empty: same behavior as above.
@@ -216,24 +217,34 @@ class ZoneCellIter : public ZoneCellIter<TenuredCell> {
     {
     }
 
-    GCType* get() const { return nullptr; }
-    operator GCType*() const { return nullptr; }
-    GCType* operator ->() const { return nullptr; }
+    GCType* get() const { return ZoneCellIter<TenuredCell>::get<GCType>(); }
+    operator GCType*() const { return get(); }
+    GCType* operator ->() const { return get(); }
 };
 
 class GCZonesIter
 {
+  private:
+    ZonesIter zone;
+
   public:
-    explicit GCZonesIter(JSRuntime* rt, ZoneSelector selector = WithAtoms) {
+    explicit GCZonesIter(JSRuntime* rt, ZoneSelector selector = WithAtoms) : zone(rt, selector) {
+        if (!zone->isCollecting())
+            next();
     }
 
-    bool done() const { return true; }
+    bool done() const { return zone.done(); }
 
     void next() {
+        MOZ_ASSERT(!done());
+        do {
+            zone.next();
+        } while (!zone.done());
     }
 
     JS::Zone* get() const {
-        return nullptr;
+        MOZ_ASSERT(!done());
+        return zone;
     }
 
     operator JS::Zone*() const { return get(); }
@@ -244,17 +255,24 @@ typedef CompartmentsIterT<GCZonesIter> GCCompartmentsIter;
 
 /* Iterates over all zones in the current zone group. */
 class GCZoneGroupIter {
+  private:
+    JS::Zone* current;
+
   public:
     explicit GCZoneGroupIter(JSRuntime* rt) {
+        current = rt->gc.getCurrentZoneGroup();
     }
 
-    bool done() const { return true; }
+    bool done() const { return !current; }
 
     void next() {
+        MOZ_ASSERT(!done());
+        current = current->nextNodeInGroup();
     }
 
     JS::Zone* get() const {
-        return nullptr;
+        MOZ_ASSERT(!done());
+        return current;
     }
 
     operator JS::Zone*() const { return get(); }

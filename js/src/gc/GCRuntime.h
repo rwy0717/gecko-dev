@@ -183,8 +183,7 @@ class GCRuntime
     void setFullCompartmentChecks(bool enable);
 
 	JS::Zone* getCurrentZoneGroup() {
-        // OMRTODO: Implement and work with zones correctly
-         return systemZone;
+         return OmrGcHelper::zone;
     }
 
 	uint64_t number;

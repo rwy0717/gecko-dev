@@ -18,6 +18,28 @@ namespace gc {
 template<class Node>
 struct GraphNodeBase
 {
+    Node*          gcNextGraphNode;
+    Node*          gcNextGraphComponent;
+    unsigned       gcDiscoveryTime;
+    unsigned       gcLowLink;
+
+    GraphNodeBase()
+      : gcNextGraphNode(nullptr),
+        gcNextGraphComponent(nullptr),
+        gcDiscoveryTime(0),
+        gcLowLink(0) {}
+
+    ~GraphNodeBase() {}
+
+    Node* nextNodeInGroup() const {
+        if (gcNextGraphNode && gcNextGraphNode->gcNextGraphComponent == gcNextGraphComponent)
+            return gcNextGraphNode;
+        return nullptr;
+    }
+
+    Node* nextGroup() const {
+        return gcNextGraphComponent;
+    }
 };
 
 /*

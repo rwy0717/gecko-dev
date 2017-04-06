@@ -4409,7 +4409,9 @@ TypeZone::beginSweep(FreeOp* fop, bool releaseTypes, AutoClearTypeInferenceState
 
     // Clear the analysis pool, but don't release its data yet. While sweeping
     // types any live data will be allocated into the pool.
-    sweepTypeLifoAlloc.steal(&typeLifoAlloc);
+	// OMR TODO: Following line fails on asserting that sweepTypeLifoAlloc is empty.
+	// 			 Freeing it after sweeping causes crash.
+    //sweepTypeLifoAlloc.steal(&typeLifoAlloc);
 
     // Sweep any invalid or dead compiler outputs, and keep track of the new
     // index for remaining live outputs.

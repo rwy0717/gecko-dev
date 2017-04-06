@@ -232,8 +232,10 @@ MM_CollectorLanguageInterfaceImpl::markingScheme_scanRoots(MM_EnvironmentBase *e
 
 		//for (GCZoneGroupIter zone(rt); !zone.done(); zone.next()) {
 		Zone *zone = OmrGcHelper::zone;
-		for (WeakMapBase* m : zone->gcWeakMapList) {
-			m->trace(_omrGCMarker);
+		if (!zone->gcWeakMapList.isEmpty()) {
+			for (WeakMapBase* m : zone->gcWeakMapList) {
+				m->trace(_omrGCMarker);
+			}
 		}
 	}
 }
@@ -512,24 +514,6 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 	for (JS::WeakCache<void*>* cache : zone->weakCaches_) {
 		cache->sweep();
 	}
-	
-	rt->sweepAtoms();
-
-    for (GCCompartmentGroupIter c(rt); !c.done(); c.next()) {
-        c->sweepCrossCompartmentWrappers();
-	}
-
-    for (GCCompartmentGroupIter c(rt); !c.done(); c.next())
-        c->sweepRegExps();
-
-    for (GCCompartmentGroupIter c(rt); !c.done(); c.next())
-        c->objectGroups.sweep(rt->defaultFreeOp());
-
-   	for (GCCompartmentGroupIter c(rt); !c.done(); c.next()) {
-        c->sweepSavedStacks();
-        c->sweepSelfHostingScriptSource();
-        c->sweepNativeIterators();
-    }
 
 	for (auto edge : zone->gcWeakRefs) {
 		/* Edges may be present multiple times, so may already be nulled. */
@@ -586,6 +570,24 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 	zone->sweepBreakpoints(&fop);
 	zone->sweepUniqueIds(&fop);
 	rt->symbolRegistry(lock).sweep();
+	
+	rt->sweepAtoms();
+
+    for (GCCompartmentGroupIter c(rt); !c.done(); c.next()) {
+        c->sweepCrossCompartmentWrappers();
+	}
+
+    for (GCCompartmentGroupIter c(rt); !c.done(); c.next())
+        c->sweepRegExps();
+
+    for (GCCompartmentGroupIter c(rt); !c.done(); c.next())
+        c->objectGroups.sweep(rt->defaultFreeOp());
+
+   	for (GCCompartmentGroupIter c(rt); !c.done(); c.next()) {
+        c->sweepSavedStacks();
+        c->sweepSelfHostingScriptSource();
+        c->sweepNativeIterators();
+    }
 
 #if 0
 	// OMRTODO: Reimplement object sweeping
@@ -605,7 +607,6 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 	rt->gc.callFinalizeCallbacks(&fop, JSFINALIZE_GROUP_END);
 
 	zone->types.endSweep(rt);
-
 
 	/* This puts the heap into the state required to walk it */
 	GC_OMRVMInterface::flushCachesForGC(env);

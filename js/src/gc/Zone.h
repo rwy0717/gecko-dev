@@ -465,25 +465,34 @@ class ZonesIter
 
 struct CompartmentsInZoneIter
 {
-    explicit CompartmentsInZoneIter(JS::Zone* zone) {
+    explicit CompartmentsInZoneIter(JS::Zone* zone) : zone(zone) {
+        it = zone->compartments.begin();
     }
 
     bool done() const {
-        return true;
+        MOZ_ASSERT(it);
+        return it < zone->compartments.begin() ||
+               it >= zone->compartments.end();
     }
     void next() {
+        MOZ_ASSERT(!done());
+        it++;
     }
 
     JSCompartment* get() const {
-        return nullptr;
+        MOZ_ASSERT(it);
+        return *it;
     }
 
     operator JSCompartment*() const { return get(); }
     JSCompartment* operator->() const { return get(); }
 
   private:
+    JS::Zone* zone;
+    JSCompartment** it;
 
     CompartmentsInZoneIter()
+      : zone(nullptr), it(nullptr)
     {}
 
     // This is for the benefit of CompartmentsIterT::comp.
@@ -495,22 +504,46 @@ struct CompartmentsInZoneIter
 template<class ZonesIterT>
 class CompartmentsIterT
 {
+    gc::AutoEnterIteration iterMarker;
+    ZonesIterT zone;
+    mozilla::Maybe<CompartmentsInZoneIter> comp;
+
   public:
     explicit CompartmentsIterT(JSRuntime* rt)
+      : iterMarker(&rt->gc), zone(rt)
     {
+        if (zone.done())
+            comp.emplace();
+        else
+            comp.emplace(zone);
     }
 
     CompartmentsIterT(JSRuntime* rt, ZoneSelector selector)
+      : iterMarker(&rt->gc), zone(rt, selector)
     {
+        if (zone.done())
+            comp.emplace();
+        else
+            comp.emplace(zone);
     }
 
-    bool done() const { return true; }
+    bool done() const { return zone.done(); }
 
     void next() {
+        MOZ_ASSERT(!done());
+        MOZ_ASSERT(!comp.ref().done());
+        comp->next();
+        if (comp->done()) {
+            comp.reset();
+            zone.next();
+            if (!zone.done())
+                comp.emplace(zone);
+        }
     }
 
     JSCompartment* get() const {
-        return nullptr;
+        MOZ_ASSERT(!done());
+        return *comp;
     }
 
     operator JSCompartment*() const { return get(); }
