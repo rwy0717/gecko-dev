@@ -589,21 +589,6 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
         c->sweepNativeIterators();
     }
 
-#if 0
-	// OMRTODO: Reimplement object sweeping
-	zone->arenas.queueForegroundObjectsForSweep(&fop);
-
-	for (unsigned i = 0; i < ArrayLength(IncrementalFinalizePhases); ++i) {
-		zone->arenas.queueForForegroundSweep(&fop, IncrementalFinalizePhases[i]);
-	}
-
-	for (unsigned i = 0; i < ArrayLength(BackgroundFinalizePhases); ++i) {
-		zone->arenas.queueForBackgroundSweep(&fop, BackgroundFinalizePhases[i]);
-	}
-
-	zone->arenas.queueForegroundThingsForSweep(&fop);
-#endif // 0
-
 	rt->gc.callFinalizeCallbacks(&fop, JSFINALIZE_GROUP_END);
 
 	zone->types.endSweep(rt);
@@ -612,25 +597,55 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 	GC_OMRVMInterface::flushCachesForGC(env);
 
 	MM_HeapRegionManager *regionManager = _extensions->getHeap()->getHeapRegionManager();
-	GC_HeapRegionIterator regionIterator(regionManager);
+	{
+		GC_HeapRegionIterator regionIterator(regionManager);
 
-	/* Walk the heap, for objects that are not marked we corrupt them to maximize the chance we will crash immediately
-	if they are used.  For live objects validate that they have the expected eyecatcher */
-	MM_HeapRegionDescriptor *hrd = regionIterator.nextRegion();
-	while (NULL != hrd) {
-		/* Walk all of the objects, making sure that those that were not marked are no longer
-		usable. If they are later used we will know this and optimally crash */
-		GC_ObjectHeapIteratorAddressOrderedList objectIterator(_extensions, hrd, false);
-		omrobjectptr_t omrobjPtr = objectIterator.nextObject();
-		while (NULL != omrobjPtr) {
-			if (!_markingScheme->isMarked(omrobjPtr)) {
-				/* object will be collected. We write the full contents of the object with a known value. */
-				uintptr_t objsize = _extensions->objectModel.getConsumedSizeInBytesWithHeader(omrobjPtr);
-				memset(omrobjPtr, 0x5E, (size_t)objsize);
-				MM_HeapLinkedFreeHeader::fillWithHoles(omrobjPtr, objsize);
+		/* Walk the heap for sweeping. */
+		MM_HeapRegionDescriptor *hrd = regionIterator.nextRegion();
+		AutoClearTypeInferenceStateOnOOM oom(zone);
+		while (NULL != hrd) {
+			GC_ObjectHeapIteratorAddressOrderedList objectIterator(_extensions, hrd, false);
+			omrobjectptr_t omrobjPtr = objectIterator.nextObject();
+			while (NULL != omrobjPtr) {
+				/* Sweep scripts, object groups, and shapes. */
+				js::gc::Cell *thing = (js::gc::Cell *)omrobjPtr;
+				js::gc::AllocKind kind = thing->getAllocKind();
+				if (kind == js::gc::AllocKind::SHAPE || kind == js::gc::AllocKind::ACCESSOR_SHAPE /*|| kind == js::gc::AllocKind::BASE_SHAPE*/) {
+					/*if (((Shape *)thing)->isMarked()) {
+						((Shape *)thing)->sweep();
+					}*/
+				} else if (kind == js::gc::AllocKind::OBJECT_GROUP) {
+					((ObjectGroup *)thing)->maybeSweep(&oom);
+				} else if (kind == js::gc::AllocKind::SCRIPT /*|| kind == js::gc::AllocKind::LAZY_SCRIPT*/) {
+					//((JSScript *)thing)->maybeSweepTypes(&oom);
+				}
+				omrobjPtr = objectIterator.nextObject();
 			}
-			omrobjPtr = objectIterator.nextObject();
+			hrd = regionIterator.nextRegion();
 		}
-		hrd = regionIterator.nextRegion();
+	}
+	{
+		GC_HeapRegionIterator regionIterator(regionManager);
+
+		/* Walk the heap, for objects that are not marked we corrupt them to maximize the chance we will crash immediately
+		if they are used.  For live objects validate that they have the expected eyecatcher */
+		MM_HeapRegionDescriptor *hrd = regionIterator.nextRegion();
+		AutoClearTypeInferenceStateOnOOM oom(zone);
+		while (NULL != hrd) {
+			/* Walk all of the objects, making sure that those that were not marked are no longer
+			usable. If they are later used we will know this and optimally crash */
+			GC_ObjectHeapIteratorAddressOrderedList objectIterator(_extensions, hrd, false);
+			omrobjectptr_t omrobjPtr = objectIterator.nextObject();
+			while (NULL != omrobjPtr) {
+				if (!_markingScheme->isMarked(omrobjPtr)) {
+					/* object will be collected. We write the full contents of the object with a known value. */
+					uintptr_t objsize = _extensions->objectModel.getConsumedSizeInBytesWithHeader(omrobjPtr);
+					memset(omrobjPtr, 0x5E, (size_t)objsize);
+					MM_HeapLinkedFreeHeader::fillWithHoles(omrobjPtr, objsize);
+				}
+				omrobjPtr = objectIterator.nextObject();
+			}
+			hrd = regionIterator.nextRegion();
+		}
 	}
 }

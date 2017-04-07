@@ -56,7 +56,6 @@ public:
 		ATTACH_GC_MASTER_THREAD = 0x3,
 	};
 	omrjs::OMRGCMarker *_omrGCMarker;
-	static bool isDuringFinalization;
 
 private:
 protected:

@@ -1171,14 +1171,17 @@ JSCompartment*
 js::NewCompartment(JSContext* cx, Zone* zone, JSPrincipals* principals,
                    const JS::CompartmentOptions& options)
 {
-	if (!zone) {
-		JSRuntime* rt = cx->runtime();
-		zone = *rt->gc.zones.begin();
+    JSRuntime* rt = cx->runtime();
+    ScopedJSDeletePtr<Zone> zoneHolder;
+
+    if (!zone) {
+        zone = *rt->gc.zones.begin();
+        zoneHolder.reset(zone);
 #ifdef OMR
         // OMRTODO: Use multiple zones from a context correctly.
         OmrGcHelper::zone = zone;
 #endif
-	}
+    }
     ScopedJSDeletePtr<JSCompartment> compartment(cx->new_<JSCompartment>(zone, options));
     if (!compartment || !compartment->init(cx))
         return nullptr;
