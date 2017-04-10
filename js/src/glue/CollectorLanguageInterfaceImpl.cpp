@@ -611,13 +611,13 @@ MM_CollectorLanguageInterfaceImpl::parallelGlobalGC_postMarkProcessing(MM_Enviro
 				js::gc::Cell *thing = (js::gc::Cell *)omrobjPtr;
 				js::gc::AllocKind kind = thing->getAllocKind();
 				if (kind == js::gc::AllocKind::SHAPE || kind == js::gc::AllocKind::ACCESSOR_SHAPE /*|| kind == js::gc::AllocKind::BASE_SHAPE*/) {
-					/*if (((Shape *)thing)->isMarked()) {
+					if (!((Shape *)thing)->isMarked()) {
 						((Shape *)thing)->sweep();
-					}*/
+					}
 				} else if (kind == js::gc::AllocKind::OBJECT_GROUP) {
 					((ObjectGroup *)thing)->maybeSweep(&oom);
 				} else if (kind == js::gc::AllocKind::SCRIPT /*|| kind == js::gc::AllocKind::LAZY_SCRIPT*/) {
-					//((JSScript *)thing)->maybeSweepTypes(&oom);
+					((JSScript *)thing)->maybeSweepTypes(&oom);
 				}
 				omrobjPtr = objectIterator.nextObject();
 			}
