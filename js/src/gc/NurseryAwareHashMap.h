@@ -17,13 +17,37 @@ template <typename T>
 class UnsafeBareReadBarriered : public ReadBarrieredBase<T>
 {
   public:
-	const T get() const {
+    UnsafeBareReadBarriered() : ReadBarrieredBase<T>(JS::GCPolicy<T>::initial()) {}
+    MOZ_IMPLICIT UnsafeBareReadBarriered(const T& v) : ReadBarrieredBase<T>(v) {}
+    explicit UnsafeBareReadBarriered(const UnsafeBareReadBarriered& v) : ReadBarrieredBase<T>(v) {}
+    UnsafeBareReadBarriered(UnsafeBareReadBarriered&& v)
+      : ReadBarrieredBase<T>(mozilla::Move(v))
+    {}
+
+    UnsafeBareReadBarriered& operator=(const UnsafeBareReadBarriered& v) {
+        this->value = v.value;
+        return *this;
+    }
+
+    UnsafeBareReadBarriered& operator=(const T& v) {
+        this->value = v;
+        return *this;
+    }
+
+    const T get() const {
+        if (!InternalBarrierMethods<T>::isMarkable(this->value))
+            return JS::GCPolicy<T>::initial();
         this->read();
         return this->value;
     }
-	T* unsafeGet() { return &this->value; }
-	
-	const T unbarrieredGet() const { return this->value; }
+
+    explicit operator bool() const {
+        return bool(this->value);
+    }
+
+    const T unbarrieredGet() const { return this->value; }
+    T* unsafeGet() { return &this->value; }
+    T const* unsafeGet() const { return &this->value; }
 };
 } // namespace detail
 
@@ -44,41 +68,52 @@ template <typename Key,
           typename AllocPolicy = TempAllocPolicy>
 class NurseryAwareHashMap
 {
-	using BarrieredValue = detail::UnsafeBareReadBarriered<Value>;
-	using MapType = GCRekeyableHashMap<Key, BarrieredValue, HashPolicy, AllocPolicy>;
-	MapType map;
-	
+    using BarrieredValue = detail::UnsafeBareReadBarriered<Value>;
+    using MapType = GCRekeyableHashMap<Key, BarrieredValue, HashPolicy, AllocPolicy>;
+    MapType map;
+
+    // Keep a list of all keys for which JS::GCPolicy<Key>::isTenured is false.
+    // This lets us avoid a full traveral of the map on each minor GC, keeping
+    // the minor GC times proportional to the nursery heap size.
+    Vector<Key, 0, AllocPolicy> nurseryEntries;
+
   public:
     using Lookup = typename MapType::Lookup;
     using Ptr = typename MapType::Ptr;
     using Range = typename MapType::Range;
-	
-    explicit NurseryAwareHashMap(AllocPolicy a = AllocPolicy()) {}
 
-    MOZ_MUST_USE bool init(uint32_t len = 16) { return true; }
+    explicit NurseryAwareHashMap(AllocPolicy a = AllocPolicy()) : map(a) {}
 
-    bool empty() const { return true; }
-    Ptr lookup(const Lookup& l) const { return Ptr(); }
-    void remove(Ptr p) { }
-    Range all() const { return Range(); }
+    MOZ_MUST_USE bool init(uint32_t len = 16) { return map.init(len); }
+
+    bool empty() const { return map.empty(); }
+    Ptr lookup(const Lookup& l) const { return map.lookup(l); }
+    void remove(Ptr p) { map.remove(p); }
+    Range all() const { return map.all(); }
     struct Enum : public MapType::Enum {
         explicit Enum(NurseryAwareHashMap& namap) : MapType::Enum(namap.map) {}
     };
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
-        return 0;
+        return map.sizeOfExcludingThis(mallocSizeOf);
     }
     size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
-        return 0;
+        return map.sizeOfIncludingThis(mallocSizeOf);
     }
 
     MOZ_MUST_USE bool put(const Key& k, const Value& v) {
-        return true;
+        auto p = map.lookupForAdd(k);
+        if (p) {
+            p->value() = v;
+            return true;
+        }
+        return map.add(p, k, v);
     }
 
     void sweepAfterMinorGC(JSTracer* trc) {
     }
 
     void sweep() {
+		map.sweep();
     }
 };
 
@@ -91,9 +126,10 @@ struct GCPolicy<js::detail::UnsafeBareReadBarriered<T>>
     static void trace(JSTracer* trc, js::detail::UnsafeBareReadBarriered<T>* thingp,
                       const char* name)
     {
+        js::TraceEdge(trc, thingp, name);
     }
     static bool needsSweep(js::detail::UnsafeBareReadBarriered<T>* thingp) {
-        return false;
+        return js::gc::IsAboutToBeFinalized(thingp);
     }
 };
 } // namespace JS

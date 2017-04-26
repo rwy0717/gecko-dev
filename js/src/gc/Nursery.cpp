@@ -13,7 +13,6 @@
 #include "mozilla/Unused.h"
 
 #include "jscompartment.h"
-#include "jscntxt.h"
 #include "jsfriendapi.h"
 #include "jsgc.h"
 #include "jsutil.h"
@@ -44,7 +43,6 @@ using mozilla::DebugOnly;
 using mozilla::PodCopy;
 using mozilla::PodZero;
 
-
 OMR_VMThread* js::Nursery::omrVMThread = nullptr;
 OMR_VM* js::Nursery::omrVM = nullptr;
 
@@ -55,25 +53,53 @@ js::Nursery::disable()
 }
 
 JSObject*
-js::Nursery::allocateObject(JSContext* cx, size_t size, size_t numDynamic, const js::Class* clasp, bool canGC)
+js::Nursery::allocateObject(JSContext* cx, size_t size, size_t numDynamic, const js::Class* clasp)
 {
-	JSObject* obj = nullptr;
-	if (canGC) {
-		OMR_GC_SystemCollect(omrVMThread, 0);
-		cx->gc.incGcNumber();
-		obj = (JSObject *)OMR_GC_Allocate(Nursery::omrVMThread, 0, size, 0);
-	} else {
-		obj = (JSObject *)OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, size, 0);
-	}
-	if (obj) {
-		if (numDynamic > 0) {
-			HeapSlot* slots = (HeapSlot *)malloc(numDynamic * sizeof(HeapSlot *));//OMR_GC_AllocateNoGC(Nursery::omrVMThread, 0, numDynamic * sizeof(HeapSlot *), 0);
-			if (!slots)
-				return nullptr;
-			obj->setInitialSlotsMaybeNonNative(slots);
-		}
-		else
-			obj->setInitialSlotsMaybeNonNative(nullptr);
-	}
-	return obj;
+    /* Ensure there's enough space to replace the contents with a RelocationOverlay. */
+    MOZ_ASSERT(size >= sizeof(RelocationOverlay));
+
+    /* Sanity check the finalizer. */
+    MOZ_ASSERT_IF(clasp->hasFinalize(), CanNurseryAllocateFinalizedClass(clasp) ||
+                                        clasp->isProxy());
+
+    /* Make the object allocation. */
+    JSObject* obj = static_cast<JSObject*>(all);
+    if (!obj)
+        return nullptr;
+
+    /* If we want external slots, add them. */
+    HeapSlot* slots = nullptr;
+    if (numDynamic) {
+        MOZ_ASSERT(clasp->isNative() || clasp->isProxy());
+        slots = static_cast<HeapSlot*>(allocateBuffer(cx->zone(), numDynamic * sizeof(HeapSlot)));
+        if (!slots) {
+            /*
+             * It is safe to leave the allocated object uninitialized, since we
+             * do not visit unallocated things in the nursery.
+             */
+            return nullptr;
+        }
+    }
+
+    /* Always initialize the slots field to match the JIT behavior. */
+    obj->setInitialSlotsMaybeNonNative(slots);
+
+    TraceNurseryAlloc(obj, size);
+    return obj;
+}
+
+void*
+js::Nursery::allocate(size_t size)
+{
+    MOZ_ASSERT(isEnabled());
+    MOZ_ASSERT(!JS::CurrentThreadIsHeapBusy());
+    MOZ_ASSERT(CurrentThreadCanAccessRuntime(runtime()));
+    MOZ_ASSERT_IF(currentChunk_ == currentStartChunk_, position() >= currentStartPosition_);
+    MOZ_ASSERT(position() % gc::CellSize == 0);
+    MOZ_ASSERT(size % gc::CellSize == 0);
+
+#ifdef OMR_DEBUG_GC_SLOW
+	OMR_GC_SystemCollect();
+#endif // 0
+	return OMR_GC_Allocate(omrVMThread, 0, size, 0);
 }

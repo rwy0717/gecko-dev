@@ -19,6 +19,18 @@
 
 #include "omrgc.h"
 
+MOZ_ALWAYS_INLINE /* static */ bool
+js::Nursery::getForwardedPointer(JSObject** ref)
+{
+    MOZ_ASSERT(ref);
+    MOZ_ASSERT(IsInsideNursery(*ref));
+    const gc::RelocationOverlay* overlay = reinterpret_cast<const gc::RelocationOverlay*>(*ref);
+    if (!overlay->isForwarded())
+        return false;
+    *ref = static_cast<JSObject*>(overlay->forwardingAddress());
+    return true;
+}
+
 namespace js {
 
 // The allocation methods below will not run the garbage collector. If the
@@ -28,28 +40,51 @@ namespace js {
 // OMRTODO: Use nursery.allocateBuffer
 template <typename T>
 static inline T*
-AllocateObjectBuffer(ExclusiveContext* cx, uint32_t count)
+AllocateObjectBuffer(JSContext* cx, uint32_t count)
 {
-	return (T *)malloc(sizeof(T) * count);
+    size_t nbytes = JS_ROUNDUP(count * sizeof(T), sizeof(Value));
+    T* buffer = static_cast<T*>(cx->nursery().allocateBuffer(cx->zone(), nbytes));
+    if (!buffer)
+        ReportOutOfMemory(cx);
+    return buffer;
 }
 
 template <typename T>
 static inline T*
-AllocateObjectBuffer(ExclusiveContext* cx, JSObject* obj, uint32_t count)
+AllocateObjectBuffer(JSContext* cx, JSObject* obj, uint32_t count)
 {
-    return AllocateObjectBuffer<T>(cx, count);
+    if (cx->helperThread())
+        return cx->zone()->pod_malloc<T>(count);
+    size_t nbytes = JS_ROUNDUP(count * sizeof(T), sizeof(Value));
+    T* buffer = static_cast<T*>(cx->nursery().allocateBuffer(obj, nbytes));
+    if (!buffer)
+        ReportOutOfMemory(cx);
+    return buffer;
 }
 
 // If this returns null then the old buffer will be left alone.
 template <typename T>
 static inline T*
-ReallocateObjectBuffer(ExclusiveContext* cx, JSObject* obj, T* oldBuffer,
+ReallocateObjectBuffer(JSContext* cx, JSObject* obj, T* oldBuffer,
                        uint32_t oldCount, uint32_t newCount)
 {
-	T *newBuffer = (T *)AllocateObjectBuffer<T>(cx, newCount);
-	memcpy(newBuffer, oldBuffer, sizeof(T) * oldCount);
-    return newBuffer;
+    if (cx->helperThread())
+        return obj->zone()->pod_realloc<T>(oldBuffer, oldCount, newCount);
+    T* buffer =  static_cast<T*>(cx->nursery().reallocateBuffer(obj, oldBuffer,
+                                                                oldCount * sizeof(T),
+                                                                newCount * sizeof(T)));
+    if (!buffer)
+        ReportOutOfMemory(cx);
+    return buffer;
 }
+
+#if 0
+static inline void
+EvictAllNurseries(JSRuntime* rt, JS::gcreason::Reason reason = JS::gcreason::EVICT_NURSERY)
+{
+    rt->gc.evictNursery(reason);
+}
+#endif // 0
 
 } // namespace js
 

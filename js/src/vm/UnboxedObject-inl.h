@@ -81,11 +81,21 @@ SetUnboxedValueNoTypeChange(JSObject* unboxedObject,
         // the pointer as a HeapPtrObject we will get confused later if the
         // object is converted to its native representation.
         JSObject* obj = v.toObjectOrNull();
+<<<<<<< HEAD
 #ifndef OMR // Writebarriers
         if (IsInsideNursery(obj) && !IsInsideNursery(unboxedObject)) {
             JSRuntime* rt = unboxedObject->runtimeFromMainThread();
             rt->gc.storeBuffer.putWholeCell(unboxedObject);
         }
+||||||| merged common ancestors
+        if (IsInsideNursery(obj) && !IsInsideNursery(unboxedObject)) {
+            JSRuntime* rt = unboxedObject->runtimeFromMainThread();
+            rt->gc.storeBuffer.putWholeCell(unboxedObject);
+        }
+=======
+        if (IsInsideNursery(obj) && !IsInsideNursery(unboxedObject))
+            unboxedObject->zone()->group()->storeBuffer().putWholeCell(unboxedObject);
+>>>>>>> mozilla/master
 
         if (preBarrier)
             JSObject::writeBarrierPre(*np);
@@ -101,7 +111,7 @@ SetUnboxedValueNoTypeChange(JSObject* unboxedObject,
 }
 
 static inline bool
-SetUnboxedValue(ExclusiveContext* cx, JSObject* unboxedObject, jsid id,
+SetUnboxedValue(JSContext* cx, JSObject* unboxedObject, jsid id,
                 uint8_t* p, JSValueType type, const Value& v, bool preBarrier)
 {
     switch (type) {
@@ -148,12 +158,22 @@ SetUnboxedValue(ExclusiveContext* cx, JSObject* unboxedObject, jsid id,
 
             // As above, trigger post barriers on the whole object.
             JSObject* obj = v.toObjectOrNull();
+<<<<<<< HEAD
 
 #ifndef OMR // Writebarriers
             if (IsInsideNursery(v.toObjectOrNull()) && !IsInsideNursery(unboxedObject)) {
                 JSRuntime* rt = unboxedObject->runtimeFromMainThread();
                 rt->gc.storeBuffer.putWholeCell(unboxedObject);
             }
+||||||| merged common ancestors
+            if (IsInsideNursery(v.toObjectOrNull()) && !IsInsideNursery(unboxedObject)) {
+                JSRuntime* rt = unboxedObject->runtimeFromMainThread();
+                rt->gc.storeBuffer.putWholeCell(unboxedObject);
+            }
+=======
+            if (IsInsideNursery(v.toObjectOrNull()) && !IsInsideNursery(unboxedObject))
+                unboxedObject->zone()->group()->storeBuffer().putWholeCell(unboxedObject);
+>>>>>>> mozilla/master
 
             if (preBarrier)
                 JSObject::writeBarrierPre(*np);
@@ -190,7 +210,7 @@ UnboxedArrayObject::layout() const
 }
 
 inline void
-UnboxedArrayObject::setLength(ExclusiveContext* cx, uint32_t length)
+UnboxedArrayObject::setLength(JSContext* cx, uint32_t length)
 {
     if (length > INT32_MAX) {
         // Track objects with overflowing lengths in type information.
@@ -222,7 +242,7 @@ UnboxedArrayObject::setInitializedLength(uint32_t initlen)
 
 template <JSValueType Type>
 inline bool
-UnboxedArrayObject::setElementSpecific(ExclusiveContext* cx, size_t index, const Value& v)
+UnboxedArrayObject::setElementSpecific(JSContext* cx, size_t index, const Value& v)
 {
     MOZ_ASSERT(index < initializedLength());
     MOZ_ASSERT(Type == elementType());
@@ -242,7 +262,7 @@ UnboxedArrayObject::setElementNoTypeChangeSpecific(size_t index, const Value& v)
 
 template <JSValueType Type>
 inline bool
-UnboxedArrayObject::initElementSpecific(ExclusiveContext* cx, size_t index, const Value& v)
+UnboxedArrayObject::initElementSpecific(JSContext* cx, size_t index, const Value& v)
 {
     MOZ_ASSERT(index < initializedLength());
     MOZ_ASSERT(Type == elementType());
@@ -478,12 +498,15 @@ EnsureBoxedOrUnboxedDenseElements(JSContext* cx, JSObject* obj, size_t count)
 
 template <JSValueType Type>
 static inline DenseElementResult
-SetOrExtendBoxedOrUnboxedDenseElements(ExclusiveContext* cx, JSObject* obj,
+SetOrExtendBoxedOrUnboxedDenseElements(JSContext* cx, JSObject* obj,
                                        uint32_t start, const Value* vp, uint32_t count,
                                        ShouldUpdateTypes updateTypes = ShouldUpdateTypes::Update)
 {
     if (Type == JSVAL_TYPE_MAGIC) {
         NativeObject* nobj = &obj->as<NativeObject>();
+
+        if (nobj->denseElementsAreFrozen())
+            return DenseElementResult::Incomplete;
 
         if (obj->is<ArrayObject>() &&
             !obj->as<ArrayObject>().lengthIsWritable() &&
@@ -568,6 +591,9 @@ MoveBoxedOrUnboxedDenseElements(JSContext* cx, JSObject* obj, uint32_t dstStart,
     MOZ_ASSERT(HasBoxedOrUnboxedDenseElements<Type>(obj));
 
     if (Type == JSVAL_TYPE_MAGIC) {
+        if (obj->as<NativeObject>().denseElementsAreFrozen())
+            return DenseElementResult::Incomplete;
+
         if (!obj->as<NativeObject>().maybeCopyElementsForWrite(cx))
             return DenseElementResult::Failure;
         obj->as<NativeObject>().moveDenseElements(dstStart, srcStart, length);
@@ -626,11 +652,19 @@ CopyBoxedOrUnboxedDenseElements(JSContext* cx, JSObject* dst, JSObject* src,
                length * elementSize);
 
         // Add a store buffer entry if we might have copied a nursery pointer to dst.
+<<<<<<< HEAD
 #ifndef OMR // Writebarriers
         if (UnboxedTypeNeedsPostBarrier(DstType) && !IsInsideNursery(dst)) {
             dst->runtimeFromMainThread()->gc.storeBuffer.putWholeCell(dst);
         }
 #endif // ! OMR Writebarriers
+||||||| merged common ancestors
+        if (UnboxedTypeNeedsPostBarrier(DstType) && !IsInsideNursery(dst))
+            dst->runtimeFromMainThread()->gc.storeBuffer.putWholeCell(dst);
+=======
+        if (UnboxedTypeNeedsPostBarrier(DstType) && !IsInsideNursery(dst))
+            dst->zone()->group()->storeBuffer().putWholeCell(dst);
+>>>>>>> mozilla/master
     } else if (DstType == JSVAL_TYPE_DOUBLE && SrcType == JSVAL_TYPE_INT32) {
         uint8_t* dstData = dst->as<UnboxedArrayObject>().elements();
         uint8_t* srcData = src->as<UnboxedArrayObject>().elements();
@@ -821,7 +855,7 @@ struct Signature ## Functor {                                           \
 }
 
 DenseElementResult
-SetOrExtendAnyBoxedOrUnboxedDenseElements(ExclusiveContext* cx, JSObject* obj,
+SetOrExtendAnyBoxedOrUnboxedDenseElements(JSContext* cx, JSObject* obj,
                                           uint32_t start, const Value* vp, uint32_t count,
                                           ShouldUpdateTypes updateTypes = ShouldUpdateTypes::Update);
 
